@@ -15,7 +15,7 @@ app.get("/songs", async (req, res) => {
         * songID?: string | mongoose.FilterQuery
      */
     /**
-        * _id: object
+        * _id: string
         * name: string
         * songURL: string
         * songName: string
