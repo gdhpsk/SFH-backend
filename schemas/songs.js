@@ -49,6 +49,8 @@ const songsSchema = new mongoose.Schema({
         required: true
     }
 }, {
+    id: false,
+    toJSON: {virtuals: true},
     virtuals: {
         isMashup: {
             get() {
