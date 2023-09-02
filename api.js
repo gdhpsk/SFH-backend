@@ -15,6 +15,7 @@ app.get("/songs", async (req, res) => {
         * songID?: string | mongoose.FilterQuery
      */
     /**
+     [
         * _id: string
         * name: string
         * songURL: string
@@ -30,6 +31,7 @@ app.get("/songs", async (req, res) => {
         * songNameCaps: string
         * songNameLowercase: string
         * songNameMobile: string
+     ]
      */
     let songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
