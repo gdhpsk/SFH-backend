@@ -8,8 +8,8 @@ const app = express.Router()
 
 // public
 
-app.get("/songs/:type", async (req, res) => {
-    let songs = await songsSchema.find({state: req.params.type})
+app.get("/songs", async (req, res) => {
+    let songs = await songsSchema.find()
     return res.json(songs)
 })
 
