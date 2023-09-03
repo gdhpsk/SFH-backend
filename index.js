@@ -19,4 +19,4 @@ app.use("/", require("./api"))
 mongoose.connect(process.env.MONGODB_URI)
 
 console.log("Listening on port http://localhost:3000")
-app.listen(3000)
+app.listen(process.env.PORT || 3000)
