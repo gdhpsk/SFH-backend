@@ -12,7 +12,7 @@ const songsSchema = new mongoose.Schema({
             validator: async v => {
                 if(!v) return true
                 let exists = await fetch(v)
-                return !exists.ok
+                return exists.ok
             },
             message: "Not a valid video"
         }
@@ -27,7 +27,7 @@ const songsSchema = new mongoose.Schema({
         validate: {
             validator: async v => {
                 let exists = await fetch("https://youtube.com/watch?v="+v)
-                return exists.status != 404
+                return exists.ok
             },
             message: "Not a valid youtube video"
         }
