@@ -48,7 +48,7 @@ async function createTransaction(cb, res) {
         session.startTransaction()
         await cb(session)
         await session.commitTransaction()
-        res.sendStatus(201)
+        res.sendStatus(204)
     } catch (e) {
         if (error instanceof MongoError && error.hasErrorLabel('UnknownTransactionCommitResult')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
@@ -73,6 +73,10 @@ app.use(async (req, res, next) => {
         // return res.status(401).json({error: "401 UNAUTHORIZED", message: "You do not have access to this resource."})
     }
     return next()
+})
+
+app.get("/ping", (req, res) => {
+    return res.sendStatus(204)
 })
 
 app.route("/songs")
