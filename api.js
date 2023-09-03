@@ -50,10 +50,10 @@ async function createTransaction(cb, res) {
         await session.commitTransaction()
         res.sendStatus(204)
     } catch (error) {
-        if (error instanceof MongooseError && error.hasErrorLabel('UnknownTransactionCommitResult')) {
+        if (error instanceof MongooseError && error.name.includes('UnknownTransactionCommitResult')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         }
-        else if (error instanceof MongooseError && error.hasErrorLabel('TransientTransactionError')) {
+        else if (error instanceof MongooseError && error.name.includes('TransientTransactionError')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         } else {
             res.status(500).json({ error: "400 BAD REQUEST", message: "An error may have occured in the process, rolling back information. Error:\n" + error })
@@ -70,7 +70,7 @@ app.use(async (req, res, next) => {
         let admin = await adminsSchema.findOne({ admins: { $in: [getUser.uid] } })
         if (!admin) throw new Error()
     } catch (_) {
-        // return res.status(401).json({error: "401 UNAUTHORIZED", message: "You do not have access to this resource."})
+        return res.status(401).json({error: "401 UNAUTHORIZED", message: "You do not have access to this resource."})
     }
     return next()
 })
