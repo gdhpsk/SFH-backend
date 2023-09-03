@@ -122,12 +122,12 @@ app.route("/songs")
     })
 
 app.route("/admins")
-    .get(async (req, res) => {
+    .post(async (req, res) => {
         let { admins } = await adminsSchema.findOne()
         let users = admins.map(async e => await authentication.getUser(e))
         return res.json(await Promise.all(users))
     })
-    .post(async (req, res) => {
+    .put(async (req, res) => {
         /**
          * uid: string
          */
@@ -152,7 +152,7 @@ app.route("/admins")
         }, res)
     })
 
-app.get("/non-admins", async (req, res) => {
+app.post("/non-admins", async (req, res) => {
     let token;
     let accs = []
     while (true) {
