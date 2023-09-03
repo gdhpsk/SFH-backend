@@ -49,14 +49,14 @@ async function createTransaction(cb, res) {
         await cb(session)
         await session.commitTransaction()
         res.sendStatus(204)
-    } catch (e) {
+    } catch (error) {
         if (error instanceof MongoError && error.hasErrorLabel('UnknownTransactionCommitResult')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         }
         else if (error instanceof MongoError && error.hasErrorLabel('TransientTransactionError')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         } else {
-            res.status(500).json({ error: "400 BAD REQUEST", message: "An error may have occured in the process, rolling back information. Error:\n" + e })
+            res.status(500).json({ error: "400 BAD REQUEST", message: "An error may have occured in the process, rolling back information. Error:\n" + error })
         }
         await session.abortTransaction();
     } finally {
