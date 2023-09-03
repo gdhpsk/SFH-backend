@@ -92,7 +92,7 @@ app.route("/songs")
          */
         console.log(req.body)
         await createTransaction(async (session) => {
-            await songsSchema.create(req.body, { session })
+            await songsSchema.create([req.body], { session })
         }, res)
     })
     .patch(async (req, res) => {
