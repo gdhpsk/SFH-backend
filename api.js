@@ -75,7 +75,7 @@ app.use(async (req, res, next) => {
     return next()
 })
 
-app.get("/ping", (req, res) => {
+app.post("/ping", (req, res) => {
     return res.sendStatus(204)
 })
 
