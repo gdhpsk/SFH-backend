@@ -40,6 +40,15 @@ app.get("/songs", async (req, res) => {
     return res.json(songs)
 })
 
+app.get("/video/:id", async (req, res) => {
+    try {
+        let song = await songsSchema.findById(req.params.id)
+        return res.render("video.ejs", {audio: song.downloadUrl})
+    } catch(_) {
+        return res.render("video.ejs")
+    }
+})
+
 // admin
 
 async function createTransaction(cb, res) {
