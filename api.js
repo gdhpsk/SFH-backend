@@ -1,7 +1,7 @@
 const express = require("express")
 const songsSchema = require("./schemas/songs")
 const { authentication } = require("./firebase-admin")
-const { default: mongoose } = require("mongoose")
+const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
@@ -50,10 +50,10 @@ async function createTransaction(cb, res) {
         await session.commitTransaction()
         res.sendStatus(204)
     } catch (error) {
-        if (error instanceof MongoError && error.hasErrorLabel('UnknownTransactionCommitResult')) {
+        if (error instanceof MongooseError && error.hasErrorLabel('UnknownTransactionCommitResult')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         }
-        else if (error instanceof MongoError && error.hasErrorLabel('TransientTransactionError')) {
+        else if (error instanceof MongooseError && error.hasErrorLabel('TransientTransactionError')) {
             res.status(500).json({ error: "500 INTERNAL SERVER ERROR", message: "Something went wrong. Please try again." })
         } else {
             res.status(500).json({ error: "400 BAD REQUEST", message: "An error may have occured in the process, rolling back information. Error:\n" + error })
