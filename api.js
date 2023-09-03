@@ -90,7 +90,6 @@ app.route("/songs")
             * state: string
             * downloadUrl: string
          */
-        console.log(req.body)
         await createTransaction(async (session) => {
             await songsSchema.create([req.body], { session })
         }, res)

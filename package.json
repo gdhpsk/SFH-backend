@@ -2,6 +2,9 @@
   "name": "sfh",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "18.x.x"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gdhpsk/SFH-backend"
