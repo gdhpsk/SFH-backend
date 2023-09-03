@@ -5,7 +5,10 @@
 </head>
 
 <body style="background-color: black;">
-    <div style="display: grid; place-items: center; margin-top: calc(50vh - 150px);">
+    <h1 style="text-align: center; color: white; padding-top: 20vh;"><%= locals.name%></h1>
+    <h2 style="text-align: center; color: white;"><%= locals.songName %></h2>
+    <h3 style="text-align: center; color: white;">(<%= locals.songID %>)</h3>
+    <div style="display: grid; place-items: center; margin-top: 150px;">
         <video controls="" autoplay="" name="media">
             <source
                 src="<%= locals.audio %>"

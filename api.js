@@ -43,7 +43,7 @@ app.get("/songs", async (req, res) => {
 app.get("/audio/:id", async (req, res) => {
     try {
         let song = await songsSchema.findById(req.params.id)
-        return res.render("video.ejs", {audio: song.downloadUrl})
+        return res.render("video.ejs", {audio: song.downloadUrl, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
     }
