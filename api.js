@@ -153,11 +153,13 @@ app.route("/admins")
          * uid: string
          */
         await createTransaction(async (session) => {
+            if(req.body.uid != "jlUpnRgrfQPSHkVn4WKPdhqjjlP2") {
             await adminsSchema.updateOne({ admins: { $in: [req.body.uid] } }, {
                 $pull: {
                     admins: req.body.uid
                 }
             }, { session })
+        }
         }, res)
     })
 
