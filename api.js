@@ -9,7 +9,7 @@ const app = express.Router()
 // public
 
 app.get("/songs", async (req, res) => {
-    console.log(req.headers["user-agent"])
+    console.log(req.headers.connection || req.headers.forwarded)
     /**
      * Query Values:
         * name?: string | mongoose.FilterQuery
