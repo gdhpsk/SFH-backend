@@ -5,6 +5,7 @@ const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
+let counter = 0
 
 // public
 
@@ -33,6 +34,8 @@ app.get("/songs", async (req, res) => {
         * songNameMobile: string
      ]
      */
+    counter++
+    console.log(counter)
     let songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true }
