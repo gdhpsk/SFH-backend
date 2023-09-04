@@ -36,7 +36,7 @@ app.get("/songs", async (req, res) => {
     let songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true }
-    })
+    }).sort({name:1})
     return res.json(songs)
 })
 
