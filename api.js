@@ -33,12 +33,22 @@ app.get("/songs", async (req, res) => {
         * songNameMobile: string
      ]
      */
-    // let songs = await songsSchema.find({
-    //     name: req.query.name ?? { $exists: true },
-    //     songID: req.query.songID ?? { $exists: true }
-    // }).sort({name:1})
-    // return res.json(songs)
-    return res.json([])
+    let songs = await songsSchema.find({
+        name: req.query.name ?? { $exists: true },
+        songID: req.query.songID ?? { $exists: true }
+    }).sort({name:1})
+    return res.json(songs.map(e => {
+        return {
+            ...e,
+            isMashup: e.state == mashup,
+            nameLowercase: e.name.toLowerCase(),
+            levelNameCaps: e.name.toUpperCase(),
+            levelNameMobile: `${e.name.toUpperCase()[0]}${e.name.toUpperCase().substring(1)}`,
+            songNameCaps: e.songName.toUpperCase(),
+            songNameLowercase: e.songName.toLowerCase(),
+            songNameMobile: `${e.songName.toUpperCase()[0]}${e.songName.toUpperCase().substring(1)}`
+        }
+    }))
 })
 
 app.get("/audio/:id", async (req, res) => {

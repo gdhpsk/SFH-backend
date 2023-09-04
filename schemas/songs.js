@@ -49,45 +49,7 @@ const songsSchema = new mongoose.Schema({
         required: true
     }
 }, {
-    id: false,
-    toJSON: {virtuals: true},
-    virtuals: {
-        isMashup: {
-            get() {
-                return this.state == "mashup"
-            }
-        },
-        nameLowercase: {
-            get() {
-                return this.name.toLowerCase()
-            }
-        },
-        levelNameCaps: {
-            get() {
-                return this.name.toUpperCase()
-            }
-        },
-        levelNameMobile: {
-            get() {
-                return `${this.name.toUpperCase()[0]}${this.name.toUpperCase().substring(1)}`
-            }
-        },
-        songNameCaps: {
-            get() {
-                return this.songName.toUpperCase()
-            }
-        },
-        songNameLowercase: {
-            get() {
-                return this.songName.toLowerCase()
-            }
-        },
-        songNameMobile: {
-            get() {
-                return `${this.songName.toUpperCase()[0]}${this.songName.toUpperCase().substring(1)}`
-            }
-        },
-    }
+    id: false
 })
 
 module.exports = mongoose.model("songs", songsSchema)
