@@ -75,6 +75,7 @@ async function createTransaction(cb, res) {
 
 app.use(async (req, res, next) => {
     try {
+        console.log("test")
         let getUser = await authentication.verifyIdToken(req.body.token)
         let admin = await adminsSchema.findOne({ admins: { $in: [getUser.uid] } })
         if (!admin) throw new Error()
