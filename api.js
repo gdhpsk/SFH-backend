@@ -9,7 +9,6 @@ const app = express.Router()
 // public
 
 app.get("/songs", async (req, res) => {
-    console.log(req.headers.connection || req.headers.forwarded)
     /**
      * Query Values:
         * name?: string | mongoose.FilterQuery
@@ -34,11 +33,12 @@ app.get("/songs", async (req, res) => {
         * songNameMobile: string
      ]
      */
-    let songs = await songsSchema.find({
-        name: req.query.name ?? { $exists: true },
-        songID: req.query.songID ?? { $exists: true }
-    }).sort({name:1})
-    return res.json(songs)
+    // let songs = await songsSchema.find({
+    //     name: req.query.name ?? { $exists: true },
+    //     songID: req.query.songID ?? { $exists: true }
+    // }).sort({name:1})
+    // return res.json(songs)
+    return res.json([])
 })
 
 app.get("/audio/:id", async (req, res) => {
