@@ -36,11 +36,11 @@ app.get("/songs", async (req, res) => {
     let songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true }
-    }).sort({name:1})
+    }).sort({name:1}).lean()
     return res.json(songs.map(e => {
         return {
             ...e,
-            isMashup: e.state == mashup,
+            isMashup: e.state == "mashup",
             nameLowercase: e.name.toLowerCase(),
             levelNameCaps: e.name.toUpperCase(),
             levelNameMobile: `${e.name.toUpperCase()[0]}${e.name.toUpperCase().substring(1)}`,
