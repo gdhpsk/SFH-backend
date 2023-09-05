@@ -5,6 +5,7 @@ const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
+let counter = 0
 
 // public
 
@@ -28,26 +29,10 @@ app.get("/songs", async (req, res) => {
      ]
      */
     req.query.format = req.query.format || "sfh"
-    let data = await fetch(`https://us-east-2.aws.data.mongodb-api.com/app/${process.env.mongodb_app_name}/endpoint/data/v1/action/find`, {
-        method: "POST",
-        headers: {
-            "apiKey": process.env["data-api"],
-            "content-type": "application/json",
-            "accept": "application/json"
-        },
-        body: JSON.stringify({
-            dataSource: "hpskprojects",
-            database: "SFH",
-            collection: "songs",
-            filter: {
-                name: req.query.name ?? { $exists: true },
-                songID: req.query.songID ?? { $exists: true }
-            },
-            sort: {name: 1}
-        })
-    })
-    let json = await data.json()
-    let {documents: songs} = json
+    let songs = await songsSchema.find({
+        name: req.query.name ?? { $exists: true },
+        songID: req.query.songID ?? { $exists: true }
+    }).sort({name:1}).lean()
     if(req.query.format == "gd") {
         let array = []
         for(const song of songs) {
