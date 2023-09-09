@@ -47,7 +47,19 @@ const songsSchema = new mongoose.Schema({
     downloadUrl: {
         type: String,
         required: true
-    }
+    },
+    levelID: {
+        type: String,
+        required: true,
+        validate: {
+            validator: async v => {
+                if(!v) return true;
+                let exists = await fetch(`https://gdbrowser.com/api/search/${v}?page=0&count=10`)
+                return exists.ok
+            },
+            message: "Not a valid level ID!"
+        }
+    },
 }, {
     id: false
 })

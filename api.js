@@ -26,6 +26,7 @@ app.get("/songs", async (req, res) => {
         * songID: string
         * state: string
         * downloadUrl: string
+        * levelID?: string
      ]
      */
     req.query.format = req.query.format || "sfh"
@@ -116,6 +117,7 @@ app.route("/songs")
             * songID: string
             * state: string
             * downloadUrl: string
+            * levelID?: string
          */
         req.body._id = new ObjectId()
         await createTransaction(async (session) => {
@@ -133,6 +135,7 @@ app.route("/songs")
                 * songID: string
                 * state: string
                 * downloadUrl: string
+                * levelID?: string
          */
         await createTransaction(async (session) => {
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
