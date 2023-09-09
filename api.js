@@ -117,6 +117,7 @@ app.route("/songs")
             * state: string
             * downloadUrl: string
          */
+        req.body._id = new ObjectId()
         await createTransaction(async (session) => {
             await songsSchema.create([req.body], { session })
         }, res)
