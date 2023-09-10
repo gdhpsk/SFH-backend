@@ -140,7 +140,7 @@ app.route("/songs")
         await createTransaction(async (session) => {
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
                 $set: req.body.data
-            }, { session })
+            }, { session, runValidators: true })
         }, res)
     })
     .delete(async (req, res) => {

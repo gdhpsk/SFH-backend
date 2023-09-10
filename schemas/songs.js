@@ -50,7 +50,7 @@ const songsSchema = new mongoose.Schema({
     },
     levelID: {
         type: String,
-        required: false,
+        required: true,
         validate: {
             validator: async v => {
                 if(!v) return true;
