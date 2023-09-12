@@ -42,6 +42,12 @@ app.get("/songs", async (req, res) => {
         songID: req.query.songID ?? { $exists: true }
     }).sort({name:1}).lean()
     }
+    songs = songs.map(e => {
+        return {
+            ...e,
+            downloadUrl: `https://storage.songfilehub.com/songs/${e._id.toString()}`
+        }
+    })
     if(req.query.format == "gd") {
         let array = []
         for(const song of songs) {
