@@ -193,6 +193,15 @@ app.route("/songs")
          */
         await createTransaction(async (session) => {
             await songsSchema.deleteOne({ _id: new ObjectId(req.body.id) }, { session })
+            await fetch("https://storage.songfilehub.com/songs", {
+                method: "DELETE",
+                headers: {
+                    'content-type' : 'application/json'
+                },
+                body: JSON.stringify({
+                    id: req.body.id
+                })
+            })
         }, res)
     })
 
