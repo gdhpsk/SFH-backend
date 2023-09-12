@@ -69,7 +69,7 @@ return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a 
 app.get("/audio/:id", async (req, res) => {
     try {
         let song = await songsSchema.findById(req.params.id)
-        return res.render("video.ejs", {audio: song.downloadUrl, name: song.name, songName: song.songName, songID: song.songID})
+        return res.render("video.ejs", {audio: `https://storage.songfilehub.com/songs/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
     }
@@ -127,6 +127,25 @@ app.route("/songs")
             * levelID?: string
          */
         req.body._id = new ObjectId()
+        try {
+            let data = await fetch(req.body.downloadUrl)
+            if(!data.ok) throw new Error("")
+            let blob = await data.blob()
+            const { FormDataEncoder } = await import("form-data-encoder");
+            let {FormData} = await import("formdata-node")
+            let formdata = new FormData()
+            formdata.set("id", req.body._id.toString())
+            formdata.set("file", blob)
+            let encoder = new FormDataEncoder(formdata)
+            let ok = await fetch("https://storage.songfilehub.com/songs", {
+                method: "POST",
+                headers: encoder.headers,
+                body: Readable.from(encoder)
+            })
+            if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
+        } catch(_) {
+            return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
+        }
         await createTransaction(async (session) => {
             await songsSchema.create([req.body], { session })
         }, res)
@@ -144,6 +163,25 @@ app.route("/songs")
                 * downloadUrl: string
                 * levelID?: string
          */
+        try {
+            let data = await fetch(req.body.downloadUrl)
+            if(!data.ok) throw new Error("")
+            let blob = await data.blob()
+            const { FormDataEncoder } = await import("form-data-encoder");
+            let {FormData} = await import("formdata-node")
+            let formdata = new FormData()
+            formdata.set("id", req.body.id)
+            formdata.set("file", blob)
+            let encoder = new FormDataEncoder(formdata)
+            let ok = await fetch("https://storage.songfilehub.com/songs", {
+                method: "POST",
+                headers: encoder.headers,
+                body: Readable.from(encoder)
+            })
+            if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
+        } catch(_) {
+            return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
+        }
         await createTransaction(async (session) => {
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
                 $set: req.body.data
