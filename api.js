@@ -129,7 +129,6 @@ app.route("/songs")
         req.body._id = new ObjectId()
         try {
             let data = await fetch(req.body.downloadUrl)
-            console.log(data.status)
             if(!data.ok) throw new Error("")
             let blob = await data.blob()
             const { FormDataEncoder } = await import("form-data-encoder");
@@ -144,7 +143,8 @@ app.route("/songs")
                 body: Readable.from(encoder)
             })
             if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
-        } catch(_) {
+        } catch(e) {
+    console.log(e)
             return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
         }
         await createTransaction(async (session) => {
