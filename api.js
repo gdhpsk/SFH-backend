@@ -5,7 +5,6 @@ const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
-let counter = 0
 
 // public
 
@@ -15,6 +14,7 @@ app.get("/songs", async (req, res) => {
         * name?: string | mongoose.FilterQuery
         * songID?: string | mongoose.FilterQuery
         * format?: "gd" | "sfh"
+        * id?: string
      */
     /**
      [
@@ -30,10 +30,17 @@ app.get("/songs", async (req, res) => {
      ]
      */
     req.query.format = req.query.format || "sfh"
-    let songs = await songsSchema.find({
+    let songs = [];
+    if(req.query.id) {
+        try {
+            songs = [await songsSchema.findById(req.query.id).lean()]
+        } catch(_){}
+    } else {
+        songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true }
     }).sort({name:1}).lean()
+    }
     if(req.query.format == "gd") {
         let array = []
         for(const song of songs) {
