@@ -129,6 +129,7 @@ app.route("/songs")
         req.body._id = new ObjectId()
         try {
             let data = await fetch(req.body.downloadUrl)
+            console.log(data.status)
             if(!data.ok) throw new Error("")
             let blob = await data.blob()
             const { FormDataEncoder } = await import("form-data-encoder");
