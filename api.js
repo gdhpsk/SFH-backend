@@ -166,7 +166,7 @@ app.route("/songs")
                 * levelID?: string
          */
         try {
-            let data = await fetch(req.body.downloadUrl)
+            let data = await fetch(req.body.data.downloadUrl)
             if(!data.ok) throw new Error("")
             let blob = await data.blob()
             const { FormDataEncoder } = await import("form-data-encoder");
