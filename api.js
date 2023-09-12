@@ -173,12 +173,11 @@ app.route("/songs")
             formdata.set("id", req.body.id)
             formdata.set("file", blob)
             let encoder = new FormDataEncoder(formdata)
-            let ok = await fetch("https://storage.songfilehub.com/songs", {
+            await fetch("https://storage.songfilehub.com/songs", {
                 method: "POST",
                 headers: encoder.headers,
                 body: Readable.from(encoder)
             })
-            if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
         } catch(_) {
             return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
         }
