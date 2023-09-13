@@ -191,6 +191,7 @@ app.route("/songs")
         } catch(_) {
             return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
         }
+        console.log(req.body)
         await createTransaction(async (session) => {
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
                 $set: req.body.data
