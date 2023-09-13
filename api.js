@@ -187,8 +187,6 @@ app.route("/songs")
                 headers: encoder.headers,
                 body: Readable.from(encoder)
             })
-        } else {
-            delete req.body.data.downloadUrl
         }
         } catch(_) {
             return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
