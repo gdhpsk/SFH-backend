@@ -174,7 +174,7 @@ app.route("/songs")
         await createTransaction(async (session) => {
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
                 $set: req.body.data
-            }, { session })
+            }, { session , runValidators: true})
             try {
                 if(new URL(req.body.data.downloadUrl).hostname != "storage.songfilehub.com") {
                 let data = await fetch(req.body.data.downloadUrl)
