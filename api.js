@@ -145,6 +145,7 @@ app.route("/songs")
                 let formdata = new FormData()
                 formdata.set("id", req.body._id.toString())
                 formdata.set("file", blob)
+                formdata.set("token", req.body.token)
                 let encoder = new FormDataEncoder(formdata)
                 let ok = await fetch("https://storage.songfilehub.com/songs", {
                     method: "POST",
@@ -185,12 +186,14 @@ app.route("/songs")
                 let formdata = new FormData()
                 formdata.set("id", req.body.id)
                 formdata.set("file", blob)
+                formdata.set("token", req.body.token)
                 let encoder = new FormDataEncoder(formdata)
-                await fetch("https://storage.songfilehub.com/songs", {
+                let ok = await fetch("https://storage.songfilehub.com/songs", {
                     method: "POST",
                     headers: encoder.headers,
                     body: Readable.from(encoder)
                 })
+                if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
             } else {
                 delete req.body.data.downloadUrl
             }
@@ -211,6 +214,7 @@ app.route("/songs")
                     'content-type' : 'application/json'
                 },
                 body: JSON.stringify({
+                    token: req.body.id,
                     id: req.body.id
                 })
             })
