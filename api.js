@@ -150,6 +150,7 @@ app.route("/songs")
                 let ok = await fetch("https://storage.songfilehub.com/songs", {
                     method: "POST",
                     headers: encoder.headers,
+                    duplex: 'half',
                     body: Readable.from(encoder)
                 })
                 if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
@@ -194,6 +195,7 @@ app.route("/songs")
                 let ok = await fetch("https://storage.songfilehub.com/songs", {
                     method: "POST",
                     headers: encoder.headers,
+                    duplex: 'half',
                     body: Readable.from(encoder)
                 })
                 if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
