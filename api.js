@@ -153,10 +153,10 @@ app.route("/songs")
                     duplex: 'half',
                     body: Readable.from(encoder)
                 })
-                if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
+                if(!ok.ok) throw new Error("The cloudflare storage bucket may be having some problems. Please wait")
             } catch(e) {
         console.log(e)
-                return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
+                throw new Error("This must be a valid download URL!")
             }
         }, res)
     })
@@ -198,12 +198,12 @@ app.route("/songs")
                     duplex: 'half',
                     body: Readable.from(encoder)
                 })
-                if(!ok.ok) return res.status(500).send({error: "500 INTERNAL SERVER ERROR", message: "The cloudflare storage bucket may be having some problems. Please wait"})
+                if(!ok.ok) throw new Error("The cloudflare storage bucket may be having some problems. Please wait")
             } else {
                 delete req.body.data.downloadUrl
             }
             } catch(_) {
-                return res.status(400).send({error: "400 BAD REQUEST", message: "This must be a valid download URL!"})
+                throw new Error("This must be a valid download URL!")
             }
         }, res)
     })
