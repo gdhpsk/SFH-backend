@@ -9,7 +9,13 @@ if(!process.env.MONGODB_URI) {
     dotenv.config()
 }
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+    dbName: "SFH",
+    readPreference: "primaryPreferred",
+    authSource: "$external",
+    authMechanism: "MONGODB-X509",
+    tlsCertificateKeyFile: process.env.keyPath
+})
 
 app.use(cors())
 app.use(express.json())
