@@ -40,7 +40,7 @@ const songsSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: {
-            validator: v => ["rated", "unrated", "mashup", "challenge"].includes(v),
+            validator: v => ["rated", "unrated", "mashup", "challenge", "remix"].includes(v),
             message: "Not a valid state!"
         }
     },
