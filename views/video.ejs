@@ -9,7 +9,7 @@
     <h2 style="text-align: center; color: white;"><%= locals.songName %></h2>
     <h3 style="text-align: center; color: white;">(<%= locals.songID %>)</h3>
     <div style="display: grid; place-items: center; margin-top: 50px;">
-        <button style="background-color: lightblue; height: 100px; width: 200px;" onclick="window.location.href = '<%= locals.audio %>?download=true&name=<%= locals.songID %>'">Download</button>
+        <button style="border-radius: 20px; font-size: large; color: white; text-decoration: underline; background-color: rgb(151, 151, 219); height: 100px; width: 200px;" onclick="window.location.href = '<%= locals.audio %>?download=true&name=<%= locals.songID %>'">Download</button>
     </div>
     <div style="display: grid; place-items: center; margin-top: 150px;">
         <video controls="" name="media">
