@@ -45,7 +45,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            downloadUrl: `https://storage.hpsk.me/api/bucket/file/${e.urlHash.toString()}?download=true`
+            downloadUrl: `https://storage.hpsk.me/api/bucket/file/${e.urlHash.toString()}?download=true&name=${e.songID}`
         }
     })
     if(req.query.format == "gd") {
