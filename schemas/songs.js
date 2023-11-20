@@ -17,6 +17,10 @@ const songsSchema = new mongoose.Schema({
             message: "Not a valid video"
         }
     },
+    urlHash: {
+        type: String,
+        required: true
+    },
     songName: {
         type: String,
         required: true

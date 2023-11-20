@@ -8,8 +8,11 @@
     <h1 style="text-align: center; color: white; padding-top: 20vh;"><%= locals.name%></h1>
     <h2 style="text-align: center; color: white;"><%= locals.songName %></h2>
     <h3 style="text-align: center; color: white;">(<%= locals.songID %>)</h3>
+    <div style="display: grid; place-items: center; margin-top: 50px;">
+        <button style="background-color: lightblue; height: 100px; width: 200px;" onclick="window.location.href = '<%= locals.audio %>?download=true&name=<%= locals.songID %>'">Download</button>
+    </div>
     <div style="display: grid; place-items: center; margin-top: 150px;">
-        <video controls="" autoplay="" name="media">
+        <video controls="" name="media">
             <source
                 src="<%= locals.audio %>"
                 type="audio/mpeg">

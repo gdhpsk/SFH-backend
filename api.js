@@ -45,7 +45,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            downloadUrl: `https://storage.songfilehub.com/songs/${e._id.toString()}`
+            downloadUrl: `https://storage.hpsk.me/api/bucket/file/${e.urlHash.toString()}?download=true`
         }
     })
     if(req.query.format == "gd") {
@@ -76,7 +76,7 @@ return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a 
 app.get("/audio/:id", async (req, res) => {
     try {
         let song = await songsSchema.findById(req.params.id)
-        return res.render("video.ejs", {audio: `https://storage.songfilehub.com/songs/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
+        return res.render("video.ejs", {audio: `https://storage.hpsk.me/api/bucket/file/${song.urlHash}`, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
     }
@@ -135,25 +135,49 @@ app.route("/songs")
          */
         req.body._id = new ObjectId()
         await createTransaction(async (session) => {
-            await songsSchema.create([req.body], { session })
             try {
                 let data = await fetch(req.body.downloadUrl)
-                if(!data.ok) throw new Error("")
-                let blob = await data.blob()
-                const { FormDataEncoder } = await import("form-data-encoder");
-                let {FormData} = await import("formdata-node")
-                let formdata = new FormData()
-                formdata.set("id", req.body._id.toString())
-                formdata.set("file", blob)
-                formdata.set("token", req.body.token)
-                let encoder = new FormDataEncoder(formdata)
-                let ok = await fetch("https://storage.songfilehub.com/songs", {
-                    method: "POST",
-                    headers: encoder.headers,
-                    duplex: 'half',
-                    body: Readable.from(encoder)
-                })
-                if(!ok.ok) throw new Error("The cloudflare storage bucket may be having some problems. Please wait")
+                if(!data.ok) throw new Error("Invalid Download URL!")
+                let buffer = new Uint8Array(await data.arrayBuffer())
+                let key = ""
+                for(let i = 0; i < buffer.length; i += 8000000) {
+                    let arr = Array.from(buffer.slice(i, i+8000000))
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body._id.toString()}.mp3`, {
+                        method: "POST",
+                        headers: {
+                            Cookie: "token="+process.env.token,
+                            'content-type': "application/json",
+                            "x-secret-token": key
+                        },
+                        body: JSON.stringify(arr)
+                    })
+                    if(!token.ok) {
+                        let data = await token.json()
+                        console.log(data)
+                        throw new Error(data.message)
+                    }
+                    if(i == 0) {
+                        let data = await token.json()
+                        key = data.key
+                    }
+                }
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body._id.toString()}.mp3`, {
+                        method: "POST",
+                        headers: {
+                            Cookie: "token="+process.env.token,
+                            'content-type': "text/plain",
+                            "x-secret-token": key
+                        },
+                        body: "END"
+                    })
+                    if(!end.ok) {
+                        let data = await end.json()
+                        console.log(data)
+                        throw new Error(data.message)
+                    }
+                    let {hash} = await end.json()
+                    req.body.urlHash = hash
+                    await songsSchema.create([req.body], { session })
             } catch(e) {
         console.log(e)
                 throw new Error("This must be a valid download URL!")
@@ -173,36 +197,62 @@ app.route("/songs")
                 * downloadUrl: string
                 * levelID?: string
          */
-        if(new URL(req.body.data.downloadUrl).hostname == "storage.songfilehub.com") {
+        if(["storage.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
-            await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
-                $set: req.body.data
-            }, { session , runValidators: true})
             try {
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
-                if(!data.ok) throw new Error("")
-                let blob = await data.blob()
-                const { FormDataEncoder } = await import("form-data-encoder");
-                let {FormData} = await import("formdata-node")
-                let formdata = new FormData()
-                formdata.set("id", req.body.id)
-                formdata.set("file", blob)
-                formdata.set("token", req.body.token)
-                let encoder = new FormDataEncoder(formdata)
-                let ok = await fetch("https://storage.songfilehub.com/songs", {
-                    method: "POST",
-                    headers: encoder.headers,
-                    duplex: 'half',
-                    body: Readable.from(encoder)
-                })
-                if(!ok.ok) throw new Error("The cloudflare storage bucket may be having some problems. Please wait")
+                if(!data.ok) throw new Error("Invalid download URL!")
+                let buffer = new Uint8Array(await data.arrayBuffer())
+                let key = ""
+                for(let i = 0; i < buffer.length; i += 8000000) {
+                    let arr = Array.from(buffer.slice(i, i+8000000))
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body.id.toString()}.mp3?overwrite=true`, {
+                        method: "POST",
+                        headers: {
+                            Cookie: "token="+process.env.token,
+                            'content-type': "application/json",
+                            "x-secret-token": key
+                        },
+                        body: JSON.stringify(arr)
+                    })
+                    if(!token.ok) {
+                        let data = await token.json()
+                        console.log(data)
+                        throw new Error(data.message)
+                    }
+                    if(i == 0) {
+                        let data = await token.json()
+                        key = data.key
+                    }
+                }
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body.id.toString()}.mp3`, {
+                        method: "POST",
+                        headers: {
+                            Cookie: "token="+process.env.token,
+                            'content-type': "text/plain",
+                            "x-secret-token": key
+                        },
+                        body: "END"
+                    })
+                    if(!end.ok) {
+                        let data = await end.json()
+                        console.log(data)
+                        throw new Error(data.message)
+                    }
+                    let {hash} = await end.json()
+                    req.body.data.urlHash = hash
             } else {
                 delete req.body.data.downloadUrl
             }
+            
+            await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
+                $set: req.body.data
+            }, { session , runValidators: true})
             } catch(_) {
+                console.log(_)
                 throw new Error("This must be a valid download URL!")
             }
         }, res)
@@ -213,16 +263,17 @@ app.route("/songs")
          */
         await createTransaction(async (session) => {
             await songsSchema.deleteOne({ _id: new ObjectId(req.body.id) }, { session })
-            await fetch("https://storage.songfilehub.com/songs", {
+            let end = await fetch("https://storage.hpsk.me/api/bucket/file/SFH/"+req.body.id+".mp3", {
                 method: "DELETE",
                 headers: {
-                    'content-type' : 'application/json'
-                },
-                body: JSON.stringify({
-                    token: req.body.id,
-                    id: req.body.id
-                })
+                    Cookie: "token="+process.env.token
+                }
             })
+            if(!end.ok) {
+                let data = await end.json()
+                console.log(data)
+                throw new Error(data.message)
+            }
         }, res)
     })
 
