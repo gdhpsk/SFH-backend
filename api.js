@@ -16,6 +16,8 @@ app.get("/songs", async (req, res) => {
         * songID?: string | mongoose.FilterQuery
         * format?: "gd" | "sfh"
         * id?: string
+        * levelID?: string
+        * states?: string,string...
      */
     /**
      [
@@ -39,7 +41,9 @@ app.get("/songs", async (req, res) => {
     } else {
         songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
-        songID: req.query.songID ?? { $exists: true }
+        songID: req.query.songID ?? { $exists: true },
+        levelID: req.query.levelID ?? { $ne: "" },
+        state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
     }).sort({name:1}).lean()
     }
     songs = songs.map(e => {
