@@ -146,7 +146,7 @@ app.route("/songs")
                 let key = ""
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body._id.toString()}.mp3`, {
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.mp3`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -165,7 +165,7 @@ app.route("/songs")
                         key = data.key
                     }
                 }
-                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body._id.toString()}.mp3`, {
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.mp3`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -213,7 +213,7 @@ app.route("/songs")
                 let key = ""
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body.id.toString()}.mp3?overwrite=true`, {
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?overwrite=true&name=${req.body.id.toString()}.mp3`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -232,7 +232,7 @@ app.route("/songs")
                         key = data.key
                     }
                 }
-                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/SFH/${req.body.id.toString()}.mp3`, {
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body.id.toString()}.mp3`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -266,8 +266,8 @@ app.route("/songs")
              * id: string
          */
         await createTransaction(async (session) => {
-            await songsSchema.deleteOne({ _id: new ObjectId(req.body.id) }, { session })
-            let end = await fetch("https://storage.hpsk.me/api/bucket/file/SFH/"+req.body.id+".mp3", {
+            let {urlHash} = await songsSchema.findOneAndDelete({ _id: new ObjectId(req.body.id) }, { session })
+            let end = await fetch("https://storage.hpsk.me/api/bucket/file/" + urlHash, {
                 method: "DELETE",
                 headers: {
                     Cookie: "token="+process.env.token
