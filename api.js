@@ -213,7 +213,7 @@ app.route("/songs")
                 let key = ""
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?overwrite=true&name=${req.body.id.toString()}.mp3`, {
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?${i == 0 ? 'overwrite=true&' : ''}name=${req.body.id.toString()}.mp3`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
