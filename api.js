@@ -139,7 +139,6 @@ app.route("/songs")
          */
         req.body._id = new ObjectId()
         await createTransaction(async (session) => {
-            try {
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
                 let buffer = new Uint8Array(await data.arrayBuffer())
@@ -182,10 +181,6 @@ app.route("/songs")
                     let {hash} = await end.json()
                     req.body.urlHash = hash
                     await songsSchema.create([req.body], { session })
-            } catch(e) {
-        console.log(e)
-                throw new Error("This must be a valid download URL!")
-            }
         }, res)
     })
     .patch(async (req, res) => {
@@ -205,7 +200,6 @@ app.route("/songs")
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
-            try {
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
                 if(!data.ok) throw new Error("Invalid download URL!")
@@ -255,10 +249,6 @@ app.route("/songs")
             await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
                 $set: req.body.data
             }, { session , runValidators: true})
-            } catch(_) {
-                console.log(_)
-                throw new Error("This must be a valid download URL!")
-            }
         }, res)
     })
     .delete(async (req, res) => {
