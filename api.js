@@ -55,13 +55,11 @@ app.get("/songs", async (req, res) => {
     if(req.query.format == "gd") {
         let array = []
         for(const song of songs) {
-            setTimeout(() => {
                 (async () => {
-                    let songData = await fetch(song.downloadUrl)
-                let bytes = await songData.blob()
-                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(bytes.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                    let songData = await fetch(song.downloadUrl + "&onlyMetadata=true")
+                let metadata = await songData.json()
+                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.ContentLength / 10000)/100}~|~10~|~${song.downloadUrl}`)
                 })()
-            }, 0)
         }
         let alr = setInterval(() => {
             if(songs.length == array.length) {
