@@ -8,13 +8,7 @@ const {WebSocketServer} = require("ws")
 const songs = require("./schemas/songs")
 const http_server = require("http").createServer(app)
 
-let server = new WebSocketServer({server: http_server})
-
-server.on("connection", socket => {
-        let uuid = crypto.randomUUID()
-        socket.send(uuid)
-        socket.uuid = uuid
-}) 
+let array = []
 
 if(!process.env.MONGODB_URI) {
     dotenv.config()
@@ -35,9 +29,35 @@ app.use(cookieParser())
 
 app.set("view engine", "ejs")
 
+app.get("/socket", async (req, res) => {
+    let uuid = crypto.randomUUID()
+    array.push({uuid, object: "", invalidate: Date.now() + 20000})
+    return res.send(uuid)
+})
+
+app.get("/socket/poll/:id", async (req, res) => {
+    let sock = array.find(e => e.uuid == req.params.id)
+    if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
+    if(sock.invalidate-10000 > Date.now()) return res.sendStatus(400)
+    let a = array.filter(e => e.uuid != req.params.id)
+    a.push({
+        ...sock,
+        invalidate: sock.object ? 0 : Date.now()+20000
+    })
+    array = a
+    return res.status(200).json(sock.object)
+})
+
+app.get("/socket/invalidate/:id", async (req, res) => {
+    let sock = array.find(e => e.uuid == req.params.id)
+    if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
+    array = array.filter(e => e.uuid != req.params.id)
+    return res.sendStatus(204)
+})
+
 app.get("/socket/:id", async (req, res) => {
-    if(!req.query.hash) return res.status(400).json({error: "400 BAD REQUEST", message: "Provide a hash to send to the ws client."})
-    let sock = Array.from(server.clients).find(e => e.uuid == req.params.id)
+    if(!req.query.hash) return res.status(400).json({error: "400 BAD REQUEST", message: "Provide a hash to send to the client."})
+    let sock = array.find(e => e.uuid == req.params.id)
     if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
     let urlHash;
     try {
@@ -46,8 +66,13 @@ app.get("/socket/:id", async (req, res) => {
     } catch(_) {
         return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find hash."})
     }
-    sock.send(urlHash.urlHash)
-    sock.close()
+    let a= array.filter(e => e.uuid != req.params.id)
+    a.push({
+        ...sock,
+        object: urlHash,
+        invalidate: Date.now()+20000
+    })
+    array = a
     return res.sendStatus(204)
 })
  
@@ -55,3 +80,7 @@ app.use("/", require("./api"))
 
 console.log("Listening on port http://localhost:3000")
 http_server.listen(process.env.PORT || 3000)
+
+setInterval(() => {
+    array = array.filter(e => e.invalidate > Date.now())
+}, 5000)
