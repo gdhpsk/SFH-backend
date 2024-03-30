@@ -44,8 +44,16 @@ const songsSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: {
-            validator: v => ["rated", "unrated", "mashup", "challenge", "remix"].includes(v),
+            validator: v => ["rated", "unrated", "mashup", "challenge", "remix", "loop"].includes(v),
             message: "Not a valid state!"
+        }
+    },
+    filetype: {
+        type: String,
+        required: true,
+        validate: {
+            validator: v => ["mp3", "ogg"].includes(v),
+            message: "Not a valid file type!"
         }
     },
     downloadUrl: {

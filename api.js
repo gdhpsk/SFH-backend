@@ -134,8 +134,11 @@ app.route("/songs")
             * state: string
             * downloadUrl: string
             * levelID?: string
+            * filetype: string
          */
         req.body._id = new ObjectId()
+        console.log(req.body)
+        req.body.filetype ||= "mp3"
         await createTransaction(async (session) => {
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
@@ -143,7 +146,7 @@ app.route("/songs")
                 let key = ""
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.mp3`, {
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -162,7 +165,7 @@ app.route("/songs")
                         key = data.key
                     }
                 }
-                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.mp3`, {
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -193,6 +196,7 @@ app.route("/songs")
                 * state: string
                 * downloadUrl: string
                 * levelID?: string
+                * filetype: string
          */
         if(["storage.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
             delete req.body.data.downloadUrl
@@ -201,11 +205,22 @@ app.route("/songs")
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
                 if(!data.ok) throw new Error("Invalid download URL!")
+                let song = await songsSchema.findOne({ _id: new ObjectId(req.body.id) })
+                if(song && req.body.data.filetype && song.filetype != req.body.data.filetype) {
+                    await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}`, {
+                        method: "DELETE",
+                        headers: {
+                            Cookie: "token="+process.env.token,
+                            'content-type': "application/json",
+                            "x-secret-token": key
+                        }
+                    })
+                }
                 let buffer = new Uint8Array(await data.arrayBuffer())
                 let key = ""
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?${i == 0 ? 'overwrite=true&' : ''}name=${req.body.id.toString()}.mp3`, {
+                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?${i == 0 ? 'overwrite=true&' : ''}name=${req.body.id.toString()}.${req.body.data.filetype || song.filetype}`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
@@ -224,7 +239,7 @@ app.route("/songs")
                         key = data.key
                     }
                 }
-                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body.id.toString()}.mp3`, {
+                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body.id.toString()}.${req.body.data.filetype || song.filetype}`, {
                         method: "POST",
                         headers: {
                             Cookie: "token="+process.env.token,
