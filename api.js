@@ -137,9 +137,9 @@ app.route("/songs")
             * filetype: string
          */
         req.body._id = new ObjectId()
-        console.log(req.body)
         req.body.filetype ||= "mp3"
         await createTransaction(async (session) => {
+            if(!["loop"].includes(req.body.state) && !req.body.levelID) throw new Error("You must specify a level ID for this type of song!")
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
                 let buffer = new Uint8Array(await data.arrayBuffer())
@@ -202,10 +202,11 @@ app.route("/songs")
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
+            let song = await songsSchema.findOne({ _id: new ObjectId(req.body.id) })
+            if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID ?? song.levelID)) throw new Error("You must specify a level ID for this type of song!")
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
                 if(!data.ok) throw new Error("Invalid download URL!")
-                let song = await songsSchema.findOne({ _id: new ObjectId(req.body.id) })
                 if(song && req.body.data.filetype && song.filetype != req.body.data.filetype) {
                     await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}`, {
                         method: "DELETE",
