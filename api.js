@@ -140,6 +140,9 @@ app.route("/songs")
         req.body.filetype ||= "mp3"
         await createTransaction(async (session) => {
             if(!["loop"].includes(req.body.state) && !req.body.levelID) throw new Error("You must specify a level ID for this type of song!")
+            if(["loop"].includes(req.body.state)) {
+                req.body.levelID = process.env.levelSecret
+            }
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
                 let buffer = new Uint8Array(await data.arrayBuffer())
@@ -204,6 +207,9 @@ app.route("/songs")
         await createTransaction(async (session) => {
             let song = await songsSchema.findOne({ _id: new ObjectId(req.body.id) })
             if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID ?? song.levelID)) throw new Error("You must specify a level ID for this type of song!")
+            if(["loop"].includes(req.body.state)) {
+                req.body.levelID = process.env.levelSecret
+            }
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
                 if(!data.ok) throw new Error("Invalid download URL!")

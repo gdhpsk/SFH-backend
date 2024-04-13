@@ -62,9 +62,10 @@ const songsSchema = new mongoose.Schema({
     },
     levelID: {
         type: String,
-        required: false,
+        required: true,
         validate: {
             validator: async v => {
+                if(v == process.env.levelSecret) return true;
                 let exists = await fetch(`https://gdbrowser.com/api/search/${v}?page=0&count=10`)
                 return exists.ok
             },
