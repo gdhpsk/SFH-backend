@@ -94,7 +94,7 @@ app.get('/song/:id', async (oreq, ores) => {
     } catch(e) {
         return ores.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
     }
-  const creq = http.request(`https://storage.hpsk.me/api/bucket/file/${hash}?${new URLSearchParams(oreq.query).toString()}`, {headers: {range: oreq.header("range") || "", "user-agent": oreq.header("user-agent")}}, pres => {
+  const creq = http.request(`https://storage.hpsk.me/api/bucket/file/${hash}?${new URLSearchParams(oreq.query).toString()}`, {headers: {range: oreq.header("range") || "", "user-agent": oreq.header("user-agent") || ""}}, pres => {
       ores.writeHead(pres.statusCode, pres.headers);
       pres.on('data', chunk => ores.write(chunk));
       pres.on('close', () => ores.end());
