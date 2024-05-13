@@ -5,7 +5,6 @@ const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
-const {Readable} = require("stream")
 
 // public
 
@@ -49,7 +48,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            downloadUrl: `https://storage.hpsk.me/api/bucket/file/${e.urlHash.toString()}?download=true&name=${e.songID}`
+            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
     if(req.query.format == "gd") {
@@ -78,11 +77,40 @@ return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a 
 app.get("/audio/:id", async (req, res) => {
     try {
         let song = await songsSchema.findById(req.params.id)
-        return res.render("video.ejs", {audio: `https://storage.hpsk.me/api/bucket/file/${song.urlHash}`, name: song.name, songName: song.songName, songID: song.songID})
+        return res.render("video.ejs", {audio: `https://api.songfilehub.com/song/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
     }
 })
+
+const http = require('https');
+
+app.get('/song/:id', async (oreq, ores) => {
+    let hash = ""
+    try {
+        let song = await songsSchema.findById(oreq.params.id).select("urlHash")
+        if(!song) throw new Error()
+        hash = song.urlHash
+    } catch(e) {
+        return ores.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
+    }
+  const creq = http.request(`https://storage.hpsk.me/api/bucket/file/${hash}?${new URLSearchParams(oreq.query).toString()}`, {headers: {range: oreq.header("range") || "", "user-agent": oreq.header("user-agent")}}, pres => {
+      ores.writeHead(pres.statusCode, pres.headers);
+      pres.on('data', chunk => ores.write(chunk));
+      pres.on('close', () => ores.end());
+      pres.on('end', () => ores.end());
+    })
+    .on('error', e => {
+      console.log(e.message);
+      try {
+        ores.writeHead(500);
+        ores.write(e.message);
+      } catch (e) {}
+      ores.end();
+    });
+  creq.end();
+});
+
 
 // admin
 
@@ -201,7 +229,7 @@ app.route("/songs")
                 * levelID?: string
                 * filetype: string
          */
-        if(["storage.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
+        if(["api.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
