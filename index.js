@@ -78,5 +78,5 @@ console.log("Listening on port http://localhost:3000")
 http_server.listen(process.env.PORT || 3000)
 
 setInterval(() => {
-    map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
+    // map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
 }, 5000)
