@@ -57,7 +57,7 @@ app.get("/songs", async (req, res) => {
                 (async () => {
                     let songData = await fetch(song.downloadUrl + "&onlyMetadata=true")
                 let metadata = await songData.json()
-                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.ContentLength / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
                 })()
         }
         let alr = setInterval(() => {
