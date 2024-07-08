@@ -76,7 +76,11 @@ return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a 
 
 app.get("/audio/:id", async (req, res) => {
     try {
-        let song = await songsSchema.findById(req.params.id)
+        let song = await songsSchema.findByIdAndUpdate(req.params.id, {
+            $inc: {
+                downloads: -1
+            }
+        })
         return res.render("video.ejs", {audio: `https://api.songfilehub.com/song/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
