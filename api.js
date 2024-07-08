@@ -93,7 +93,7 @@ app.get("/song/:id", async (req, res) => {
     try {
         let song = await songsSchema.findByIdAndUpdate(req.params.id, {
             $inc: {
-                downloads: 1
+                downloads: !Object.keys(req.query).length || req.query.download ? 1 : 0
             }
         })
         if(!song) throw new Error()
