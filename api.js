@@ -85,32 +85,20 @@ app.get("/audio/:id", async (req, res) => {
 
 const http = require('https');
 
-app.get('/song/:id', async (oreq, ores) => {
-    let hash = ""
+app.get("/song/:id", async (req, res) => {
     try {
-        let song = await songsSchema.findById(oreq.params.id).select("urlHash")
+        let song = await songsSchema.findByIdAndUpdate(req.params.id, {
+            $inc: {
+                downloads: 1
+            }
+        })
         if(!song) throw new Error()
-        hash = song.urlHash
-    } catch(e) {
-        return ores.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
+        res.set({range: req.header("range") || "", "user-agent": req.header("user-agent") || ""})
+        return res.redirect(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?${Object.keys(req.query).length ? new URLSearchParams(req.query).toString() : `download=true&name=${song.songID}`}`)
+    } catch(_) {
+        return res.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
     }
-  const creq = http.request(`https://storage.hpsk.me/api/bucket/file/${hash}?${new URLSearchParams(oreq.query).toString()}`, {headers: {range: oreq.header("range") || "", "user-agent": oreq.header("user-agent") || ""}}, pres => {
-      ores.writeHead(pres.statusCode, pres.headers);
-      pres.on('data', chunk => ores.write(chunk));
-      pres.on('close', () => ores.end());
-      pres.on('end', () => ores.end());
-    })
-    .on('error', e => {
-      console.log(e.message);
-      try {
-        ores.writeHead(500);
-        ores.write(e.message);
-      } catch (e) {}
-      ores.end();
-    });
-  creq.end();
-});
-
+})
 
 // admin
 

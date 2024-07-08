@@ -60,6 +60,7 @@ const songsSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    downloads: Number,
     levelID: {
         type: String,
         required: true,
