@@ -48,7 +48,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
+            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}`
         }
     })
     if(req.query.format == "gd") {
