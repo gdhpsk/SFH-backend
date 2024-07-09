@@ -48,7 +48,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}`
+            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
     if(req.query.format == "gd") {
@@ -76,11 +76,7 @@ return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a 
 
 app.get("/audio/:id", async (req, res) => {
     try {
-        let song = await songsSchema.findByIdAndUpdate(req.params.id, {
-            $inc: {
-                downloads: -1
-            }
-        })
+        let song = await songsSchema.findById(req.params.id)
         return res.render("video.ejs", {audio: `https://api.songfilehub.com/song/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
     } catch(_) {
         return res.render("video.ejs")
@@ -93,12 +89,12 @@ app.get("/song/:id", async (req, res) => {
     try {
         let song = await songsSchema.findByIdAndUpdate(req.params.id, {
             $inc: {
-                downloads: !Object.keys(req.query).length || req.query.download ? 1 : 0
+                downloads: req.query.download && !req.query.onlyMetadata ? 1 : 0
             }
         })
         if(!song) throw new Error()
         res.set({range: req.header("range") || "", "user-agent": req.header("user-agent") || ""})
-        return res.redirect(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?${Object.keys(req.query).length ? new URLSearchParams(req.query).toString() : `download=true&name=${song.songID}`}`)
+        return res.redirect(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}${Object.keys(req.query).length ? `?${new URLSearchParams(req.query).toString()}` : ``}`)
     } catch(_) {
         return res.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
     }
