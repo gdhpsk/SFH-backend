@@ -35,7 +35,7 @@ app.get("/songs", async (req, res) => {
     let songs = [];
     if(req.query.id) {
         try {
-            songs = [await songsSchema.findById(req.query.id).lean()]
+            songs = [{...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id}]
         } catch(_){}
     } else {
         songs = await songsSchema.find({
