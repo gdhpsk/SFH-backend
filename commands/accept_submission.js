@@ -34,7 +34,7 @@ module.exports = {
                     levelID: json.levelID,
                     filetype: interaction.message.attachments[0].content_type == "audio/mpeg" ? "mp3" : "ogg"
                 }
-                let request = await fetch("https://sfhbot.hpsk.me/songs", {
+                let request = await fetch("https://api.songfilehub.com/songs", {
                     method: "POST",
                     headers: {
                         'content-type': "application/json"
