@@ -163,7 +163,7 @@ http_server.listen(process.env.PORT || 3000);
 
 (async () => {
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
-        body: Object.values(cmdobject).filter(e => !e.button).map(e => e.data)
+        body: Object.values(cmdobject).filter(e => !e.data.button).map(e => e.data)
     })
     console.log("Registered slash commands.");
 })()
