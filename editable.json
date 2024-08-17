@@ -1,0 +1,13 @@
+{
+    "mashup": ["songName", "songAuthor", "mashupName", "mashupAuthor", "levelID", "songURL", "showcase", "comments"],
+    "remix": ["remixName", "remixAuthor", "remixType", "levelID", "songURL", "showcase", "comments"],
+    "unrared": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
+    "rated": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
+    "challenge": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
+    "loop": {
+        "mashup": ["songName", "songAuthor", "mashupName", "mashupAuthor", "songURL", "showcase", "comments"],
+        "remix": ["remixType", "songURL", "showcase", "comments"],
+        "texture": ["songName", "songAuthor", "texturePackCreator", "texturePackShowcase", "songURL", "showcase", "comments"],
+        "song": ["songName", "songAuthor", "songURL", "showcase", "comments"]
+    }
+}

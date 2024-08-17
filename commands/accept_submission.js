@@ -1,0 +1,87 @@
+const { generateText, generateSongName, getYoutubeVideoId } = require("../helper");
+const songs = require("../schemas/songs");
+
+module.exports = {
+    data: {
+        name: "accept_submission",
+        description: "Button used to accept a submission (mod)",
+        button: true
+    },
+    async execute(interaction, rest, Routes) {
+        let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
+        if (!user.roles.includes("899796185966075905")) return;
+            try {
+                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                    body: {
+                        type: 6
+                    }
+                })
+                let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
+                let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
+                let req = await fetch(metadata.attachments[0].url)
+                let json = await req.json()
+
+                /// Database logic HERE:
+                let obj = {
+                    token: process.env.SUPER_SECRET,
+                    name: json.state == "loop" ? `GD Menu Loop${json.menuType == "texture" ? ` (${json.texturePackCreator} TP)` : ""}` : json.name,
+                    songURL: json.songURL,
+                    downloadUrl: interaction.message.attachments[0].url,
+                    songName: generateSongName(json),
+                    ytVideoID: getYoutubeVideoId(json.showcase).videoId,
+                    songID: json.songID,
+                    state: json.state,
+                    levelID: json.levelID,
+                    filetype: interaction.message.attachments[0].content_type == "audio/mpeg" ? "mp3" : "ogg"
+                }
+                let request = await fetch("https://sfhbot.hpsk.me/songs", {
+                    method: "POST",
+                    headers: {
+                        'content-type': "application/json"
+                    },
+                    body: JSON.stringify(obj)
+                })
+                if(!request.ok) {
+                    let err = await request.json()
+                    await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
+                        body: {
+                            content: err.message,
+                            flags: 1 << 6
+                        }
+                    })
+                    return;
+                }
+
+                await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
+                let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
+                    body: {
+                        components: [],
+                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
+                    }
+                })
+                await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
+                    body: {
+                        content: `Successfully accepted submission by <@${json.userID}>:\n\n${msg.content}`,
+                        flags: 1 << 6
+                    }
+                })
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token, interaction.message_id), {
+                    body: {
+                        components: [],
+                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
+                    }
+                })
+                await rest.post(Routes.channelMessages(json.DMchannel), {
+                    body: {
+                        content: `Moderator <@${interaction.member.user.id}> has accepted this submission of yours!`,
+                        message_reference: {
+                            message_id: json.DMmessage
+                        }
+                    }
+                })
+            } catch (_) {
+                console.log(_)
+            }
+            return;
+    }
+}

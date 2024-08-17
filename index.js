@@ -4,16 +4,19 @@ const cors = require("cors")
 const cookieParser = require("cookie-parser")
 const dotenv = require("dotenv")
 const app = express()
-const {WebSocketServer} = require("ws")
+const { WebSocketServer } = require("ws")
 const songs = require("./schemas/songs")
+const cron = require("node-cron");
 const http_server = require("http").createServer(app)
-
+const { REST } = require("@discordjs/rest")
+const { Routes } = require("discord-api-types/v10");
+const fs = require("fs")
+const nacl = require('tweetnacl');
 let map = new Map()
-
-if(!process.env.MONGODB_URI) {
+if (!process.env.MONGODB_URI) {
     dotenv.config()
 }
-
+let rest = new REST({ version: "10" }).setToken(process.env.bot_token)
 mongoose.connect(process.env.MONGODB_URI, {
     dbName: "SFH",
     readPreference: "primaryPreferred",
@@ -22,60 +25,148 @@ mongoose.connect(process.env.MONGODB_URI, {
     tlsCertificateKeyFile: process.env.keyPath
 })
 
+// let renewSongs = async () => {
+//     let everything = await songs.find({}, {levelID: 1, name: 1}).lean()
+//     for(let level of everything) {
+//         let req = await fetch(`https://gdbrowser.com/api/search/${level.levelID}`)
+//         if(!req.ok) {
+//             console.log(`Error on level ${level.name}`)
+//             continue;
+//         }
+//         let lev = await req.json()
+//         await songs.findByIdAndUpdate(level._id, {
+//             $set: {
+//                 levelID: lev[0].id
+//             }
+//         })
+//         await new Promise((resolve, reject) => {
+//             setTimeout(resolve, 5000)
+//         })
+//     }
+//     console.log("done")
+// }
+
+// renewSongs()
+
+// cron.schedule("0 0 * * *", renewSongs)
+
 app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-app.use(cookieParser())
+app.use(express.urlencoded({ extended: true }))
 
 app.set("view engine", "ejs")
 
+const PUBLIC_KEY = process.env.public_key;
+const CLIENT_ID = process.env.app_id;
+function verifySignature(signature, timestamp, rawBody, publicKey) {
+
+    const isVerified = nacl.sign.detached.verify(
+        Buffer.from(timestamp + rawBody),
+        Buffer.from(signature, 'hex'),
+        Buffer.from(publicKey, 'hex')
+    );
+    return isVerified
+}
+
+function rawBodySaver(req, res, buf, encoding) {
+    if (buf && buf.length) {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+}
+
+let commands = fs.readdirSync("./commands").filter(e => e.endsWith(".js"));
+let cmdobject = {}
+for (const file of commands) {
+    let command_file = require(`./commands/${file}`)
+    cmdobject[command_file.data.name] = command_file
+};
+
+app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, res) => {
+
+    // Your public key can be found on your application in the Developer Portal
+
+    const interaction = req.body;
+
+    // Verify the interaction's signature
+    const signature = req.get('X-Signature-Ed25519');
+    const timestamp = req.get('X-Signature-Timestamp');
+    const isValidSignature = verifySignature(signature, timestamp, req.rawBody, PUBLIC_KEY);
+    if (!isValidSignature) {
+        return res.status(401).end('invalid request signature');
+    }
+
+    switch (interaction.type) {
+        case 1: // Ping
+            res.json({ type: 1 });
+            break;
+        default:
+            req.body.member = {
+                user: req.body.member?.user ?? req.body.user
+            }
+            await cmdobject[req.body.data.name ?? req.body.message.interaction?.name ??  req.body.data.custom_id].execute(req.body, rest, Routes)
+            res.status(200).json({ type: 1 });
+            break;
+    }
+
+
+});
+
+app.use(express.json())
+app.use(cookieParser())
+
 app.get("/socket", async (req, res) => {
     let uuid = crypto.randomUUID()
-    map.set(uuid, {object: "", invalidate: Date.now() + 20000})
+    map.set(uuid, { object: "", invalidate: Date.now() + 20000 })
     return res.send(uuid)
 })
 
 app.get("/socket/poll/:id", async (req, res) => {
     let sock = map.get(req.params.id)
-    if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
-    if(sock.invalidate-10000 > Date.now()) return res.sendStatus(400)
+    if (!sock) return res.status(400).json({ error: "400 BAD REQUEST", message: "Could not find socket." })
+    if (sock.invalidate - 10000 > Date.now()) return res.sendStatus(400)
     map.set(req.params.id, {
         ...sock,
-        invalidate: sock.object ? 0 : Date.now()+20000
+        invalidate: sock.object ? 0 : Date.now() + 20000
     })
     return res.status(200).json([sock.object])
 })
 
 app.get("/socket/invalidate/:id", async (req, res) => {
     let sock = map.get(req.params.id)
-    if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
+    if (!sock) return res.status(400).json({ error: "400 BAD REQUEST", message: "Could not find socket." })
     map.delete(req.params.id)
     return res.sendStatus(204)
 })
 
 app.get("/socket/:id", async (req, res) => {
-    if(!req.query.hash) return res.status(400).json({error: "400 BAD REQUEST", message: "Provide a hash to send to the client."})
-    let sock =map.get(req.params.id)
-    if(!sock) return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find socket."})
+    if (!req.query.hash) return res.status(400).json({ error: "400 BAD REQUEST", message: "Provide a hash to send to the client." })
+    let sock = map.get(req.params.id)
+    if (!sock) return res.status(400).json({ error: "400 BAD REQUEST", message: "Could not find socket." })
     let urlHash;
     try {
         urlHash = await songs.findById(req.query.hash)
-        if(!urlHash) throw new Error()
-    } catch(_) {
-        return res.status(400).json({error: "400 BAD REQUEST", message: "Could not find hash."})
+        if (!urlHash) throw new Error()
+    } catch (_) {
+        return res.status(400).json({ error: "400 BAD REQUEST", message: "Could not find hash." })
     }
     map.set(req.params.id, {
         ...sock,
         object: urlHash,
-        invalidate: Date.now()+20000
+        invalidate: Date.now() + 20000
     })
     return res.sendStatus(204)
 })
- 
+
 app.use("/", require("./api"))
 
 console.log("Listening on port http://localhost:3000")
-http_server.listen(process.env.PORT || 3000)
+http_server.listen(process.env.PORT || 3000);
+
+(async () => {
+    await rest.put(Routes.applicationCommands(CLIENT_ID), {
+        body: Object.values(cmdobject).filter(e => !e.button).map(e => e.data)
+    })
+    console.log("Registered slash commands.");
+})()
 
 setInterval(() => {
     map = new Map(map.entries().filter(e => e.invalidate > Date.now()))

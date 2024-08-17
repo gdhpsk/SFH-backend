@@ -126,6 +126,7 @@ async function createTransaction(cb, res) {
 
 app.use(async (req, res, next) => {
     try {
+        if(req.body.token == process.env.SUPER_SECRET) return next()
         let getUser = await authentication.verifyIdToken(req.body.token)
         let admin = await adminsSchema.findOne({ admins: { $in: [getUser.uid] } })
         if (!admin) throw new Error()
@@ -156,9 +157,11 @@ app.route("/songs")
         req.body.filetype ||= "mp3"
         await createTransaction(async (session) => {
             if(!["loop"].includes(req.body.state) && !req.body.levelID) throw new Error("You must specify a level ID for this type of song!")
+            req.body.urlHash = "LMAO"
             if(["loop"].includes(req.body.state)) {
                 req.body.levelID = process.env.levelSecret
             }
+            let song = await songsSchema.create([req.body], { session })
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
                 let buffer = new Uint8Array(await data.arrayBuffer())
@@ -200,7 +203,11 @@ app.route("/songs")
                     }
                     let {hash} = await end.json()
                     req.body.urlHash = hash
-                    await songsSchema.create([req.body], { session })
+                    await songsSchema.findByIdAndUpdate(song[0]._id.toString(), {
+                        $set: {
+                            urlHash: hash
+                        }
+                    }, { session })
         }, res)
     })
     .patch(async (req, res) => {
@@ -221,11 +228,17 @@ app.route("/songs")
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
-            let song = await songsSchema.findOne({ _id: new ObjectId(req.body.id) })
+            let song = await songsSchema.findById(req.body.id)
             if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID ?? song.levelID)) throw new Error("You must specify a level ID for this type of song!")
             if(["loop"].includes(req.body.state)) {
                 req.body.levelID = process.env.levelSecret
             }
+            if(!req.body.data.downloadUrl) {
+                delete req.body.data.downloadUrl
+            }
+            await songsSchema.findByIdAndUpdate(req.body.id, {
+                $set: req.body.data
+            }, { session , runValidators: true})
                 if(req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
                 if(!data.ok) throw new Error("Invalid download URL!")
@@ -278,13 +291,7 @@ app.route("/songs")
                     }
                     let {hash} = await end.json()
                     req.body.data.urlHash = hash
-            } else {
-                delete req.body.data.downloadUrl
             }
-            
-            await songsSchema.updateOne({ _id: new ObjectId(req.body.id) }, {
-                $set: req.body.data
-            }, { session , runValidators: true})
         }, res)
     })
     .delete(async (req, res) => {
