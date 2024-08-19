@@ -74,12 +74,16 @@ function rawBodySaver(req, res, buf, encoding) {
 }
 
 let commands = fs.readdirSync("./commands").filter(e => e.endsWith(".js"));
-let cmdobject = {}
+let guild_cmds = {}
+let global_cmds = {}
 for (const file of commands) {
     let command_file = require(`./commands/${file}`)
-    cmdobject[command_file.data.name] = command_file
+    if(command_file.data.guild_id) {
+        guild_cmds[command_file.data.name] = command_file
+    } else {
+        global_cmds[command_file.data.name] = command_file
+    }
 };
-
 app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, res) => {
 
     // Your public key can be found on your application in the Developer Portal
@@ -99,17 +103,24 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
             res.json({ type: 1 });
             break;
         default:
+            let type = req.body.data.custom_id ?? req.body.data.name ?? req.body.message.interaction?.name
+            if(!req.body.member && type == "Delete Submission") {
+                req.body.member = {
+                    user: req.body.member?.user ?? req.body.user
+                }
+                await global_cmds[type].execute(req.body, rest, Routes)
+            } else {
             req.body.member = {
                 user: req.body.member?.user ?? req.body.user
             }
-            await cmdobject[req.body.data.name ?? req.body.message.interaction?.name ??  req.body.data.custom_id].execute(req.body, rest, Routes)
+            await (guild_cmds[type] || global_cmds[type]).execute(req.body, rest, Routes)
+        }
             res.status(200).json({ type: 1 });
             break;
     }
 
 
 });
-
 app.use(express.json())
 app.use(cookieParser())
 
@@ -162,8 +173,12 @@ console.log("Listening on port http://localhost:3000")
 http_server.listen(process.env.PORT || 3000);
 
 (async () => {
+    Routes.applicationGuildCommands()
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
-        body: Object.values(cmdobject).filter(e => !e.data.button).map(e => e.data)
+        body: Object.values(global_cmds) .filter(e => !e.data.button).map(e => e.data)
+    })
+    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, process.env.server_id), {
+        body: Object.values(guild_cmds).filter(e => !e.data.button).map(e => e.data)
     })
     console.log("Registered slash commands.");
 })()

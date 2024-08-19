@@ -490,13 +490,13 @@ module.exports = {
             })
             let avatar = await fetch(`https://cdn.discordapp.com/avatars/${interaction.member.user.id}/${interaction.member.user.avatar}.${interaction.member.user.avatar.startsWith("a_") ? "gif" : "png"}`)
             let avatar_buffer = await avatar.arrayBuffer()
-            let webhook = await rest.post(Routes.channelWebhooks(channel), {
+            await rest.patch(channel, {
                 body: {
                     name: interaction.member.user.global_name,
                     avatar: interaction.member.user.avatar ? `data:image/${interaction.member.user.avatar.startsWith("a_") ? "gif" : "png"};base64,${Buffer.from(avatar_buffer).toString("base64")}` : undefined
                 }
             })
-            let message = await rest.post(Routes.webhook(webhook.id, webhook.token), {
+            let message = await rest.post(channel, {
                 files: [
                     {
                         name: `${obj.songID}.${song.content_type == "audio/mpeg" ? "mp3" : "ogg"}`,
@@ -510,12 +510,6 @@ module.exports = {
                         {
                             "type": 1,
                             "components": [
-                                {
-                                    "type": 2,
-                                    "label": "Edit",
-                                    "style": 1,
-                                    "custom_id": "edit_user_submission"
-                                },
                                 {
                                     "type": 2,
                                     "label": "Notify",
@@ -550,10 +544,9 @@ module.exports = {
                 ]
                 }
             })
-            await rest.delete(Routes.webhook(webhook.id))
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
-                    content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. A message will be sent to you in DMs incase you want to edit / delete your submission.`
+                    content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. A message will be sent to you in DMs incase you want to edit / delete your submission. To view this commands, simply right click the message and click on "Apps".`
                 }
             })
             try {
@@ -578,12 +571,6 @@ module.exports = {
                                     "components": [
                                         {
                                             "type": 2,
-                                            "label": "Edit",
-                                            "style": 1,
-                                            "custom_id": "edit_user_submission"
-                                        },
-                                        {
-                                            "type": 2,
                                             "label": "Delete",
                                             "style": 4,
                                             "custom_id": "delete_user_submission"
@@ -599,7 +586,7 @@ module.exports = {
 
             }
             obj["webhookMessage"] = message.id
-            obj["webhookChannel"] = message.channel_id
+            obj["webhookURL"] = channel
             delete obj.songFile
             await rest.patch(Routes.channelMessage(process.env.metadata_channel, metadata.id), {
                 files: [

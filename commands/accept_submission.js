@@ -3,17 +3,22 @@ const songs = require("../schemas/songs");
 
 module.exports = {
     data: {
-        name: "accept_submission",
-        description: "Button used to accept a submission (mod)",
-        button: true
+        name: "Accept Submission",
+        guild_id: process.env.server_id,
+        type: 3
     },
     async execute(interaction, rest, Routes) {
+        if(interaction.application_id != process.env.app_id) return;
+        interaction.message = Object.values(interaction.data.resolved.messages)[0]
         let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
         if (!user.roles.includes("899796185966075905")) return;
             try {
                 await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                     body: {
-                        type: 6
+                        type: 5,
+                        data: {
+                            flags: 1 << 6
+                        }
                     }
                 })
                 let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
@@ -43,7 +48,7 @@ module.exports = {
                 })
                 if(!request.ok) {
                     let err = await request.json()
-                    await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
+                    await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                         body: {
                             content: err.message,
                             flags: 1 << 6
@@ -59,16 +64,16 @@ module.exports = {
                         content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
                     }
                 })
-                await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
-                    body: {
-                        content: `Successfully accepted submission by <@${json.userID}>:\n\n${msg.content}`,
-                        flags: 1 << 6
-                    }
-                })
-                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token, interaction.message_id), {
+                await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
                     body: {
                         components: [],
                         content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
+                    }
+                })
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                    body: {
+                        content: `Successfully accepted submission by <@${json.userID}>:\n\n${msg.content}`,
+                        flags: 1 << 6
                     }
                 })
                 await rest.post(Routes.channelMessages(json.DMchannel), {

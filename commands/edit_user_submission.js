@@ -2,11 +2,12 @@ let editable = require("../editable.json")
 
 module.exports = {
     data: {
-        name: "edit_user_submission",
-        description: "Button used to edit a submission (user)",
-        button: true
+        name: "Edit Submission",
+        type: 3,
     },
     async execute(interaction, rest, Routes) {
+        if(interaction.application_id != process.env.app_id) return;
+        interaction.message = Object.values(interaction.data.resolved.messages)[0]
         if (interaction.message.webhook_id) {
             let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
             if (!user.roles.includes("899796185966075905")) return;
@@ -14,7 +15,10 @@ module.exports = {
         let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
         await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
             body: {
-                type: 6
+                type: 5,
+                data: {
+                    flags: 1 << 6
+                }
             }
         })
         try {
@@ -34,53 +38,17 @@ module.exports = {
                     description: json[field]
                 })
             }
-            if (!interaction.message.webhook_id) {
-                await rest.patch(Routes.channelMessage(interaction.message.channel_id, interaction.message.id), {
-                    body: {
+            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                body: {
+                    content: `https://discord.com/channels/${process.env.server_id}/${interaction.message.channel_id}/${json.webhookMessage}\n-# Submission ID: ${submissionID}`,
                         components: [
-                            ...interaction.message.components,
                             {
                                 type: 1,
                                 components: [select_menu]
-                            },
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        label: "Go Back",
-                                        style: 1,
-                                        custom_id: "back"
-                                    }
-                                ]
                             }
                         ]
-                    }
-                })
-            } else {
-                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token, interaction.message_id), {
-                    body: {
-                        components: [
-                            ...interaction.message.components,
-                            {
-                                type: 1,
-                                components: [select_menu]
-                            },
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        label: "Go Back",
-                                        style: 1,
-                                        custom_id: "back"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                })
-            }
+                }
+            })
         } catch (_) {
             console.log(_)
         }
