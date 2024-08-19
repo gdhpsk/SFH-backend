@@ -173,7 +173,6 @@ console.log("Listening on port http://localhost:3000")
 http_server.listen(process.env.PORT || 3000);
 
 (async () => {
-    Routes.applicationGuildCommands()
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
         body: Object.values(global_cmds) .filter(e => !e.data.button).map(e => e.data)
     })
