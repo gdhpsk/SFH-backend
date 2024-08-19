@@ -506,42 +506,6 @@ module.exports = {
                 ],
                 body: {
                     content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:`,
-                    components: [
-                        {
-                            "type": 1,
-                            "components": [
-                                {
-                                    "type": 2,
-                                    "label": "Notify",
-                                    "style": 1,
-                                    "custom_id": "notify_user"
-                                },
-                                {
-                                    "type": 2,
-                                    "label": "Delete",
-                                    "style": 4,
-                                    "custom_id": "delete_mod_submission"
-                                }
-                            ]
-                        },
-                        {
-                            "type": 1,
-                            "components": [
-                                {
-                                    "type": 2,
-                                    "label": "Accept",
-                                    "style": 1,
-                                    "custom_id": "accept_submission"
-                                },
-                                {
-                                    "type": 2,
-                                    "label": "Reject",
-                                    "style": 4,
-                                    "custom_id": "reject_submission"
-                                }
-                            ]
-                        }
-                ]
                 }
             })
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
@@ -564,20 +528,7 @@ module.exports = {
                         }
                     ],
                     body: {
-                        content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`,
-                        components: [
-                                {
-                                    "type": 1,
-                                    "components": [
-                                        {
-                                            "type": 2,
-                                            "label": "Delete",
-                                            "style": 4,
-                                            "custom_id": "delete_user_submission"
-                                        }
-                                    ]
-                                }
-                        ]
+                        content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`
                     }
                 })
                 obj["DMchannel"] = dm.id
