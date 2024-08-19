@@ -6,22 +6,22 @@ module.exports = {
         type: 3,
     },
     async execute(interaction, rest, Routes) {
-        if(interaction.application_id != process.env.app_id) return;
+        if (interaction.application_id != process.env.app_id) return;
         interaction.message = Object.values(interaction.data.resolved.messages)[0]
         if (interaction.message.webhook_id) {
             let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
             if (!user.roles.includes("899796185966075905")) return;
         }
-        let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-        await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-            body: {
-                type: 5,
-                data: {
-                    flags: 1 << 6
-                }
-            }
-        })
         try {
+            let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
+            await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                body: {
+                    type: 5,
+                    data: {
+                        flags: 1 << 6
+                    }
+                }
+            })
             let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
             let req = await fetch(metadata.attachments[0].url)
             let json = await req.json()
@@ -41,16 +41,15 @@ module.exports = {
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: `https://discord.com/channels/${process.env.server_id}/${interaction.message.channel_id}/${json.webhookMessage}\n-# Submission ID: ${submissionID}`,
-                        components: [
-                            {
-                                type: 1,
-                                components: [select_menu]
-                            }
-                        ]
+                    components: [
+                        {
+                            type: 1,
+                            components: [select_menu]
+                        }
+                    ]
                 }
             })
         } catch (_) {
-            console.log(_)
         }
         return;
     }

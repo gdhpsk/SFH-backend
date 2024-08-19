@@ -45,50 +45,53 @@ module.exports = {
                     }
                 })
             } catch (_) {
-                console.log(_)
             }
             return;
         }
-        interaction.message = Object.values(interaction.data.resolved.messages)[0]
-        let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-        await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-            body: {
-                type: 9,
-                data: {
-                    title: "Submission Deletion",
-                    custom_id: "Delete Submission",
-                    components: [
-                        {
-                            type: 1,
-                            components: [
-                                {
-                                    "type": 4,
-                                    "custom_id": "reason",
-                                    "label": "Reason?",
-                                    "style": 1,
-                                    "min_length": 1,
-                                    "placeholder": "Reasoning...",
-                                    "required": true
-                                }
-                            ]
-                        },
-                        {
-                            type: 1,
-                            components: [
-                                {
-                                    "type": 4,
-                                    "custom_id": "id",
-                                    "label": "Submission ID",
-                                    "style": 1,
-                                    "min_length": 1,
-                                    "value": submissionID,
-                                    "required": true
-                                }
-                            ]
-                        }
-                    ]
+        try {
+            interaction.message = Object.values(interaction.data.resolved.messages)[0]
+            let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
+            await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                body: {
+                    type: 9,
+                    data: {
+                        title: "Submission Deletion",
+                        custom_id: "Delete Submission",
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        "type": 4,
+                                        "custom_id": "reason",
+                                        "label": "Reason?",
+                                        "style": 1,
+                                        "min_length": 1,
+                                        "placeholder": "Reasoning...",
+                                        "required": true
+                                    }
+                                ]
+                            },
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        "type": 4,
+                                        "custom_id": "id",
+                                        "label": "Submission ID",
+                                        "style": 1,
+                                        "min_length": 1,
+                                        "value": submissionID,
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                 }
-            }
-        })
+            })
+        } catch (_) {
+
+        }
     }
 }

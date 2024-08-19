@@ -51,10 +51,11 @@ module.exports = {
                     }
                 })
             } catch (_) {
-                console.log(_)
+
             }
             return;
         }
+        try {
         interaction.message = Object.values(interaction.data.resolved.messages)[0]
         let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
         await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
@@ -96,5 +97,6 @@ module.exports = {
                 }
             }
         })
+    } catch(_) {}
     }
 }

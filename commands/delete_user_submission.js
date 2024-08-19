@@ -7,17 +7,17 @@ module.exports = {
         type: 3
     },
     async execute(interaction, rest, Routes) {
-        if(interaction.application_id != process.env.app_id) return;
-        interaction.message = Object.values(interaction.data.resolved.messages)[0]
-        await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-            body: {
-                type: 5,
-                data: {
-                    flags: 1 << 6
-                }
-            }
-        })
+        if (interaction.application_id != process.env.app_id) return;
         try {
+            interaction.message = Object.values(interaction.data.resolved.messages)[0]
+            await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                body: {
+                    type: 5,
+                    data: {
+                        flags: 1 << 6
+                    }
+                }
+            })
             let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
             let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
             let req = await fetch(metadata.attachments[0].url)
@@ -38,8 +38,8 @@ module.exports = {
                     }
                 }
             })
-        } catch(_) {
-           
+        } catch (_) {
+
         }
     }
 }
