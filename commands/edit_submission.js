@@ -47,7 +47,10 @@ module.exports = {
                 })
                 await rest.patch(`${obj.webhookURL}/messages/${obj.webhookMessage}`, {
                     body: {
-                        content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:`
+                        content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:`,
+                         allowed_mentions: {
+                            parse: []
+                         }
                     }
                 })
                 await rest.patch(Routes.channelMessage(process.env.metadata_channel, submissionID), {
@@ -62,7 +65,7 @@ module.exports = {
                 await rest.patch(Routes.channelMessage(obj.DMchannel, obj.DMmessage), {
                     body: {
                         content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`,
-                        components: interaction.message.webhook_id ? undefined : interaction.message.components.slice(0, -2)
+                        components: []
                     }
                 })
                 await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
