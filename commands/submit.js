@@ -506,6 +506,7 @@ module.exports = {
                 ],
                 body: {
                     content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:`,
+                    allowed_mentions: []
                 }
             })
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
