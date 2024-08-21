@@ -94,12 +94,6 @@ module.exports = {
                         required: true
                     },
                     {
-                        type: 3,
-                        name: "remix_type",
-                        description: "What type of remix",
-                        required: true
-                    },
-                    {
                         type: 4,
                         name: "level_id",
                         description: "ID of the level",
@@ -116,6 +110,12 @@ module.exports = {
                         name: "showcase",
                         description: "YT link for the thumbnail on the site",
                         required: true
+                    },
+                    {
+                        type: 3,
+                        name: "remix_info",
+                        description: 'For example, in "gdhpsk - example (8-Bit)", "(8-Bit)" is the remix info. Include proper brackets!',
+                        required: false
                     },
                     {
                         type: 3,
@@ -346,7 +346,7 @@ module.exports = {
                             {
                                 type: 3,
                                 name: "remix_type",
-                                description: "Type of the remixed menu loop",
+                                description: "Type of the remixed menu loop (i.e. 8 bit)",
                                 required: true
                             },
                             {
@@ -650,7 +650,7 @@ module.exports = {
         if (interaction.data.options[0].name == "remix") {
             obj["remixName"] = getOption("remix_name")
             obj["remixAuthor"] = getOption("remix_author")
-            obj["remixType"] = getOption("remix_type")
+            obj["remixInfo"] = getOption("remix_info")
             obj["comments"] = getOption("comments") || ""
             channel = process.env.remix_channel
             obj["state"] = "remix"
