@@ -62,7 +62,7 @@ module.exports = {
             body: {
                 type: 9,
                 data: {
-                    title: "Submission Deletion",
+                    title: "Submission Rejection",
                     custom_id: "Reject Submission",
                     components: [
                         {
