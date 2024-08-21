@@ -1,5 +1,4 @@
 const { generateText, generateSongName, getYoutubeVideoId } = require("../helper");
-const songs = require("../schemas/songs");
 
 module.exports = {
     data: {
