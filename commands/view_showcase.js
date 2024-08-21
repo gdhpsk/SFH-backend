@@ -1,9 +1,6 @@
-let editable = require("../editable.json")
-
 module.exports = {
     data: {
         name: "View Showcase",
-        guild_id: process.env.guild_id,
         type: 3,
     },
     async execute(interaction, rest, Routes) {

@@ -1,5 +1,3 @@
-const FormData = require("form-data")
-const { Readable } = require('stream');
 const { generateText, getYoutubeVideoId } = require("../helper");
 
 module.exports = {
