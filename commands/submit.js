@@ -470,6 +470,7 @@ module.exports = {
         ]
     },
     async execute(interaction, rest, Routes) {
+        try {
         let getOption = (option) => interaction.data.options[0].options.find(e => e.name == option)?.value
         if (interaction.data.options[0].name == "menu") {
             getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
@@ -486,14 +487,22 @@ module.exports = {
                     }
                 ]
             })
-            let avatar = await fetch(`https://cdn.discordapp.com/avatars/${interaction.member.user.id}/${interaction.member.user.avatar}.${interaction.member.user.avatar.startsWith("a_") ? "gif" : "png"}`)
+            let avatar = await fetch(interaction.member.user.avatar ? `https://cdn.discordapp.com/avatars/${interaction.member.user.id}/${interaction.member.user.avatar}.png` : !parseInt(interaction.member.user.discriminator) ? `https://cdn.discordapp.com/embed/avatars/${(parseInt(interaction.member.user.id) >> 22) % 6}.png` : `https://cdn.discordapp.com/embed/avatars/${parseInt(interaction.member.user.discriminator) % 5}.png`)
             let avatar_buffer = await avatar.arrayBuffer()
-            await rest.patch(channel, {
-                body: {
-                    name: interaction.member.user.global_name,
-                    avatar: interaction.member.user.avatar ? `data:image/${interaction.member.user.avatar.startsWith("a_") ? "gif" : "png"};base64,${Buffer.from(avatar_buffer).toString("base64")}` : undefined
-                }
-            })
+            try {
+                await rest.patch(channel, {
+                    body: {
+                        name: interaction.member.user.global_name,
+                        avatar: `data:image/png;base64,${Buffer.from(avatar_buffer).toString("base64")}`
+                    }
+                })
+            } catch(_) {
+                await rest.patch(channel, {
+                    body: {
+                        name: interaction.member.user.global_name
+                    }
+                })
+            }
             let message = await rest.post(channel, {
                 files: [
                     {
@@ -609,7 +618,7 @@ module.exports = {
         }
         let ytVideoId = getOption("showcase")?.toString()
         if(ytVideoId) {
-            let exists = await fetch(`https://i.ytimg.com/vi/${getYoutubeVideoId(ytVideoId).videoId}/mqdefault.jpg`)
+            let exists = await fetch(`https://i.ytimg.com/vi/${getYoutubeVideoId(ytVideoId)?.videoId}/mqdefault.jpg`)
             if (!exists.ok) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                     body: {
@@ -710,5 +719,8 @@ module.exports = {
         }
         await generateEmbed(obj, channel, generateText(obj))
         return
+    } catch(_) {
+
     }
+}
 }
