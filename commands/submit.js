@@ -492,14 +492,14 @@ module.exports = {
             try {
                 await rest.patch(channel, {
                     body: {
-                        name: interaction.member.user.global_name,
+                        name: interaction.member.user.global_name || interaction.member.user.username,
                         avatar: `data:image/png;base64,${Buffer.from(avatar_buffer).toString("base64")}`
                     }
                 })
             } catch(_) {
                 await rest.patch(channel, {
                     body: {
-                        name: interaction.member.user.global_name
+                        name: interaction.member.user.global_name || interaction.member.user.username
                     }
                 })
             }
@@ -720,7 +720,7 @@ module.exports = {
         await generateEmbed(obj, channel, generateText(obj))
         return
     } catch(_) {
-
+        console.log(_)
     }
 }
 }
