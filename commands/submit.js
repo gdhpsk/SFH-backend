@@ -20,26 +20,26 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_author",
+                        name: "gdsong_author",
                         description: "Author of the original song",
                         required: true
                     },
                     {
                         type: 3,
-                        name: "song_name",
+                        name: "gdsong_name",
                         description: "Name of the original song",
                         required: true
                     },
                     {
                         type: 3,
-                        name: "mashup_author",
-                        description: "Author of the mashuped song",
+                        name: "song_author",
+                        description: "Author of the song that you're mashing the gd song up with",
                         required: true
                     },
                     {
                         type: 3,
-                        name: "mashup_name",
-                        description: "Name of the mashuped song",
+                        name: "song_name",
+                        description: "Name of the song that you're mashing the gd song up with",
                         required: true
                     },
                     {
@@ -288,14 +288,14 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "mashup_author",
-                                description: "Author of the mashuped menu loop",
+                                name: "song_author",
+                                description: "Author of the song that you're mashing the gd menu loop up with",
                                 required: true
                             },
                             {
                                 type: 3,
-                                name: "mashup_name",
-                                description: "Name of the mashuped menu loop",
+                                name: "song_name",
+                                description: "Name of the song that you're mashing the gd menu loop up with",
                                 required: true
                             },
                             {
@@ -312,13 +312,13 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "song_author",
+                                name: "gdsong_author",
                                 description: "Author of the original menu loop",
                                 required: false
                             },
                             {
                                 type: 3,
-                                name: "song_name",
+                                name: "gdsong_name",
                                 description: "Name of the original menu loop",
                                 required: false
                             },
@@ -645,10 +645,10 @@ module.exports = {
         }
         let channel = ""
         if (interaction.data.options[0].name == "mashup") {
-            obj["songName"] = getOption("song_name")
-            obj["songAuthor"] = getOption("song_author")
-            obj["mashupName"] = getOption("mashup_name")
-            obj["mashupAuthor"] = getOption("mashup_author")
+            obj["songName"] = getOption("gdsong_name")
+            obj["songAuthor"] = getOption("gdsong_author")
+            obj["mashupName"] = getOption("song_name")
+            obj["mashupAuthor"] = getOption("song_author")
             obj["comments"] = getOption("comments") || ""
             channel = process.env.mashup_channel
             obj["state"] = "mashup"
@@ -694,10 +694,10 @@ module.exports = {
             obj["songID"] = "menuLoop"
             switch(interaction.data.options[0].options[0].name) {
                 case "mashup":
-                    obj["songName"] = getOption("song_name")
-                    obj["songAuthor"] = getOption("song_author") || "Menu Loop"
-                    obj["mashupName"] = getOption("mashup_name")
-                    obj["mashupAuthor"] = getOption("mashup_author")
+                    obj["songName"] = getOption("gdsong_name")
+                    obj["songAuthor"] = getOption("gdsong_author") || "Menu Loop"
+                    obj["mashupName"] = getOption("song_name")
+                    obj["mashupAuthor"] = getOption("song_author")
                     obj["menuType"] = "mashup"
                 break;
                 case "remix":
