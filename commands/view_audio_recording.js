@@ -10,9 +10,10 @@ module.exports = {
         if (interaction.application_id != process.env.app_id) return;
         await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
             body: {
-                type: 5,
+                type: 4,
                 data: {
-                    flags:  1 << 6
+                    content: "Loading...",
+                    flags:  (1 << 6) ^ (1 << 13)
                 }
             }
         })
@@ -39,7 +40,7 @@ module.exports = {
                 ],
                 body: {
                         content: `https://discord.com/channels/${process.env.server_id}/${interaction.message.channel_id}/${json.webhookMessage}\n-# Submission ID: ${submissionID}`,
-                        flags: 1 << 13,
+                        flags:  (1 << 6) ^ (1 << 13),
                         attachments: [
                             {
                                 id: "0",
