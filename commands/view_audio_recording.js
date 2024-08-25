@@ -18,10 +18,6 @@ module.exports = {
             }
         })
         interaction.message = Object.values(interaction.data.resolved.messages)[0]
-        if (interaction.message.webhook_id) {
-            let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
-            if (!user.roles.includes("899796185966075905")) return;
-        }
         try {
             let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
             let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
