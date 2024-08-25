@@ -28,7 +28,7 @@ module.exports = {
                 /// Database logic HERE:
                 let obj = {
                     token: process.env.SUPER_SECRET,
-                    name: json.state == "loop" ? `GD Menu Loop${json.menuType == "texture" ? ` (${json.texturePackCreator} TP)` : ""}` : json.name,
+                    name: json.state == "loop" ? `Menu Loop${json.menuType == "texture" ? ` (${json.texturePackCreator} TP)` : ""}` : json.name,
                     songURL: json.songURL,
                     downloadUrl: interaction.message.attachments[0].url,
                     songName: generateSongName(json),

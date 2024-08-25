@@ -21,7 +21,7 @@ module.exports = {
             let json = await req.json()
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
-                    content: json.showcase
+                    content: `https://discord.com/channels/${process.env.server_id}/${interaction.message.channel_id}/${json.webhookMessage}\n-# Submission ID: ${submissionID}\n${json.showcase}`
                 }
             })
         } catch (_) {
