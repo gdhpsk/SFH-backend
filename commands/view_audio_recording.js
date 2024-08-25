@@ -41,7 +41,7 @@ module.exports = {
                             {
                                 id: "0",
                                 filename: `${json.songID}.${interaction.message.attachments[0].content_type == "audio/mpeg" ? "mp3" : "ogg"}`,
-                                contentType: interaction.message.attachments[0].content_type,
+                                content_type: interaction.message.attachments[0].content_type,
                                 waveform,
                                 duration_secs: duration
                             }
