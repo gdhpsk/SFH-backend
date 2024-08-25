@@ -1,5 +1,6 @@
 const fs = require("fs")
-const arrayBufferToWaveform = require("../waveform")
+const arrayBufferToWaveform = require("../waveform");
+const { convertOggToMp3 } = require("../conversion");
 
 module.exports = {
     data: {
@@ -26,12 +27,21 @@ module.exports = {
             let req = await fetch(interaction.message.attachments[0].url)
             let buffer = await req.arrayBuffer()
             let {waveform, duration} = await arrayBufferToWaveform(buffer);
+            let data = null
+            switch(interaction.message.attachments[0].content_type) {
+                case "audio/ogg":
+                    data = await convertOggToMp3(Buffer.from(buffer))
+                break;
+                default:
+                    data = Buffer.from(buffer)
+                break;
+            }
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 files: [
                     {
-                        name: `${json.songID}.${interaction.message.attachments[0].content_type == "audio/mpeg" ? "mp3" : "ogg"}`,
-                        contentType: interaction.message.attachments[0].content_type,
-                        data: Buffer.from(buffer),
+                        name:  `${json.songID}.mp3`,
+                        contentType: "audio/mpeg",
+                        data,
                     }
                 ],
                 body: {
@@ -40,8 +50,9 @@ module.exports = {
                         attachments: [
                             {
                                 id: "0",
-                                filename: `${json.songID}.${interaction.message.attachments[0].content_type == "audio/mpeg" ? "mp3" : "ogg"}`,
-                                content_type: interaction.message.attachments[0].content_type,
+                                filename:  `${json.songID}.mp3`,
+                                content_type: "audio/mpeg",
+                                size:  interaction.message.attachments[0].size,
                                 waveform,
                                 duration_secs: duration
                             }
@@ -49,7 +60,11 @@ module.exports = {
                 }
             })
         } catch (_) {
-            
+            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                body: {
+                    content: "Could not load the file successfully."
+                }
+            })
         }
         return;
     }
