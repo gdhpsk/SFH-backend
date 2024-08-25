@@ -12,7 +12,7 @@ module.exports = async function arrayBufferToWaveform(arrayBuffer, samplesPerPix
     const { length, numberOfChannels } = audioBuffer;
     const samplesCount = Math.ceil(length / samplesPerPixel);
     const waveform = []
-    let intervals = Math.floor(samplesCount / 100)  || 1
+    let intervals = Math.floor(samplesCount / 50)  || 1
     // Process data in chunks
     for (let i = 0; i < samplesCount; i += intervals) {
       const sampleIndex = i * samplesPerPixel;
