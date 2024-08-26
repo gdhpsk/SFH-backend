@@ -701,6 +701,7 @@ module.exports = {
             let s = null
             try {
                 s = await songsSchema.findById(getOption("song")).lean()
+                if(!s) throw new Error()
             } catch(_) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                     body: {
