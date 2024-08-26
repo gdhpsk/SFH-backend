@@ -25,7 +25,7 @@ module.exports = {
             let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
             let req = await fetch(metadata.attachments[0].url)
             let json = await req.json()
-            let fields = json.menuType ? editable[json.state][json.menuType] : editable[json.state]
+            let fields = json.duplicate ? editable["duplicate"] : json.menuType ? editable[json.state][json.menuType] : editable[json.state]
             let select_menu = {
                 type: 3,
                 custom_id: "edit_submission",

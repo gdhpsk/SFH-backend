@@ -16,6 +16,7 @@ module.exports = {
                 let obj = await req.json()
                 let field = interaction.data.components[0].components[0].custom_id
                 let value = interaction.data.components[0].components[0].value
+                if(field == "state" && !['rated', 'unrated', 'challenge'].includes(field)) return; 
                 if (field == "levelID") {
                     let exists = await fetch(`https://gdbrowser.com/api/search/${value}?page=0&count=1`)
                     if (!exists.ok) {

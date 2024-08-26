@@ -1,4 +1,5 @@
 const { generateText, getYoutubeVideoId } = require("../helper");
+const songsSchema = require("../schemas/songs")
 
 module.exports = {
     data: {
@@ -7,6 +8,38 @@ module.exports = {
         type: 1,
         dm_permission: true,
         options: [
+            {
+                type: 1,
+                name: "duplicate",
+                description: "Submit a duplicate song that's on the site w a different level ID",
+                options: [
+                    {
+                        type: 3,
+                        name: "song",
+                        description: "The song you want to duplicate",
+                        required: true,
+                        autocomplete: true
+                    },
+                    {
+                        type: 4,
+                        name: "level_id",
+                        description: "ID of the level",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "showcase",
+                        description: "YT link for the thumbnail on the site",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "comments",
+                        description: "Extra comments?",
+                        required: false
+                    },
+                ]
+            },
             {
                 type: 1,
                 name: "mashup",
@@ -472,6 +505,24 @@ module.exports = {
     async execute(interaction, rest, Routes) {
         try {
         let getOption = (option) => interaction.data.options[0].options.find(e => e.name == option)?.value
+        if(interaction.data.options[0].name == "duplicate" && interaction.data.options[0].options.find(e => e.name == "song")?.focused) {
+            let song = getOption("song")
+            let query = await songsSchema.find({name: new RegExp(song, "i"), state: {$nin: ["loop", "mashup", "remix"]}}, {name: 1, songName: 1}, {limit: 25}).lean()
+            await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                body: {
+                    type: 8,
+                    data: {
+                        choices: query.map(e => {
+                            return {
+                                name: `${e.name} (${e.songName})`,
+                                value: e._id.toString()
+                            }
+                        })
+                    }
+                }
+            })
+            return
+    }
         if (interaction.data.options[0].name == "menu") {
             getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
         }
@@ -570,7 +621,7 @@ module.exports = {
             }
         })
         let song = Object.values(interaction.data?.resolved?.attachments || {})?.[0]
-        if (!["audio/mpeg", "audio/ogg"].includes(song?.content_type || "")) {
+        if (song && !["audio/mpeg", "audio/ogg"].includes(song?.content_type || "")) {
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: "Your song file must be either in mp3 or ogg format!"
@@ -581,7 +632,7 @@ module.exports = {
 
         // song object
         let obj = {
-            "songFile": song.url,
+            "songFile": song?.url,
             userID: interaction.member.user.id
         }
 
@@ -602,6 +653,7 @@ module.exports = {
             obj["author"] = level.author
             obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
             obj["levelID"] = levelID
+            obj["state"] = ["Tiny", "Short"].includes(level.length) ? "challenge" : level.stars ? "rated" : "unrated"
         }
         let songURL = getOption("song_link")?.toString()
         if(songURL) {
@@ -644,6 +696,20 @@ module.exports = {
             obj["texturePackShowcase"] = texture
         }
         let channel = ""
+
+        if (interaction.data.options[0].name == "duplicate") {
+            let s = await songsSchema.findById(getOption("song")).lean()
+            obj["songName"] = s.songName
+            obj.songFile = `https://storage.hpsk.me/api/bucket/file/${s.urlHash}`
+            obj["songURL"] = s.songURL
+            obj["comments"] = getOption("comments") || ""
+            obj["duplicate"] = true
+            song = {
+                content_type: s.filetype == "mp3" ? "audio/mpeg" : "audio/ogg"
+            }
+            channel = process.env.nong_channel
+        }
+
         if (interaction.data.options[0].name == "mashup") {
             obj["songName"] = getOption("gdsong_name")
             obj["songAuthor"] = getOption("gdsong_author")

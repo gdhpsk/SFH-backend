@@ -3,6 +3,7 @@
     "remix": ["remixName", "remixAuthor", "remixInfo", "levelID", "songURL", "showcase", "comments"],
     "unrated": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
     "rated": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
+    "duplicate":  ["levelID", "showcase", "comments", "state"],
     "challenge": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
     "loop": {
         "mashup": ["songName", "songAuthor", "mashupName", "mashupAuthor", "songURL", "showcase", "comments"],

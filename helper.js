@@ -33,14 +33,20 @@ function menuLoopText(obj) {
     return `## GD Menu Loop <:MenuLoop:1228952088164438067>\n***Song:*** ${obj.menuType == "remix" ? `GD Menu Song (${obj.remixType})` : obj.menuType == "mashup" ? `${obj.songAuthor == 'Menu Loop' ? 'GD Menu Loop' : obj.songAuthor} ${obj.songName ? `- ${obj.songName} ` : ''}x ${obj.mashupAuthor} - ${obj.mashupName}` : `${obj.songAuthor} - ${obj.songName}`}\n***Song URL:*** <${obj["songURL"]}>\n***Thumbnail:*** https://i.ytimg.com/vi/${getYoutubeVideoId(obj["showcase"]).videoId}/mqdefault.jpg${obj.menuType == "texture" ? `\n***Texture Pack:*** ${obj.texturePackCreator}\n***Texture Pack Showcase:*** <${obj.texturePackShowcase}>` : ""}${obj.comments ? `\n***Notes:*** ${obj.comments}` : ""}`
 }
 
+function duplicateText(obj) {
+    return `## ${obj["name"]} by ${obj["author"]} <:Copied:1277470308982325372>\n***Song:*** ${obj["songName"]}\n***Level ID:*** ${obj["levelID"]}\n***Song ID:*** ${obj["songID"]}\n***Song URL:*** <${obj["songURL"]}>\n***Thumbnail:*** https://i.ytimg.com/vi/${getYoutubeVideoId(obj["showcase"]).videoId}/mqdefault.jpg\n***State:*** ${obj.state}${obj.comments ? `\n***Notes:*** ${obj.comments}` : ""}`
+}
+
 module.exports = {
     generateText(obj) {
+        if(obj.duplicate) return duplicateText(obj)
         if(obj.state == "mashup") return mashupText(obj)
         if(obj.state == "remix") return remixText(obj)
         if(["unrated", "rated", "challenge"].includes(obj.state)) return unratedratedchallengeText(obj)
         if(obj.state == "loop") return menuLoopText(obj)
     },
     generateSongName(obj) {
+        if(obj.duplicate) return obj.songName
         if(obj.state == "mashup") return `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}`
             if(obj.state == "remix") return `${obj["remixAuthor"]} - ${obj["remixName"]}${obj["remixInfo"] ? ` ${obj["remixInfo"]}` : ""}`
             if(["unrated", "rated", "challenge"].includes(obj.state)) return `${obj["songAuthor"]} - ${obj["songName"]}`
