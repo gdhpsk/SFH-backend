@@ -507,14 +507,14 @@ module.exports = {
         let getOption = (option) => interaction.data.options[0].options.find(e => e.name == option)?.value
         if(interaction.data.options[0].name == "duplicate" && interaction.data.options[0].options.find(e => e.name == "song")?.focused) {
             let song = getOption("song")
-            let query = await songsSchema.find({name: new RegExp(song, "i"), state: {$nin: ["loop", "mashup", "remix"]}}, {name: 1, songName: 1}, {limit: 25}).lean()
+            let query = await songsSchema.find({$expr: {$and: [{$regexMatch: {input: {$concat: ["$name", " (", "$songName", ")"]}, regex: new RegExp(song, 'i')}}, {$not: {$in: ["$state", ["mashup", "remix", "loop"]]}}]}}, {name: 1, songName: 1}, {limit: 25}).lean()
             await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                 body: {
                     type: 8,
                     data: {
                         choices: query.map(e => {
                             return {
-                                name: `${e.name} (${e.songName})`,
+                                name: `${e.name} (${e.songName.length > 97 - e.name.length ? `${e.songName.slice(0, 94-e.name.length)}...` : e.songName})`,
                                 value: e._id.toString()
                             }
                         })
