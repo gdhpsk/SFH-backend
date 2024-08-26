@@ -698,7 +698,17 @@ module.exports = {
         let channel = ""
 
         if (interaction.data.options[0].name == "duplicate") {
-            let s = await songsSchema.findById(getOption("song")).lean()
+            let s = null
+            try {
+                s = await songsSchema.findById(getOption("song")).lean()
+            } catch(_) {
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                    body: {
+                        content: "Invalid song option! Please make sure you actually click an option rather than typing something in."
+                    }
+                })
+                return
+            }
             obj["songName"] = s.songName
             obj.songFile = `https://storage.hpsk.me/api/bucket/file/${s.urlHash}`
             obj["songURL"] = s.songURL
