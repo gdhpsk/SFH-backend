@@ -35,7 +35,7 @@ module.exports = {
                 select_menu.options.push({
                     label: field,
                     value: field,
-                    description: json[field]
+                    description: json[field]?.length > 100 ? `${json[field].slice(0,97)}...` : json[field]
                 })
             }
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
