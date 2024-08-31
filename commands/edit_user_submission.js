@@ -50,7 +50,7 @@ module.exports = {
                 }
             })
         } catch (_) {
-            console.log(_)
+            //console.log(_)
         }
         return;
     }
