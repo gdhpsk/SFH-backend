@@ -81,14 +81,6 @@ module.exports = {
         }
         let selected = interaction.data.values[0]
         let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-        await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-            body: {
-                type: 5,
-                data: {
-                    flags: 1 << 6
-                }
-            }
-        })
         let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
         let req = await fetch(metadata.attachments[0].url)
         let json = await req.json()
