@@ -99,7 +99,7 @@ module.exports = {
                                     "type": 4,
                                     "custom_id": selected,
                                     "label": selected,
-                                    "style": value.toString().length > 32 ? 2 : 1,
+                                    "style": 1,
                                     "min_length": 1,
                                     "placeholder": "Value...",
                                     value,
