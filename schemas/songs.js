@@ -62,13 +62,12 @@ const songsSchema = new mongoose.Schema({
     },
     downloads: Number,
     levelID: {
-        type: String,
+        type: [String],
         required: true,
         validate: {
             validator: async v => {
-                if(v == process.env.levelSecret) return true;
-                let exists = await fetch(`https://gdbrowser.com/api/search/${v}?page=0&count=10`)
-                return exists.ok
+                if(!v.length) return false;
+                return true
             },
             message: "Not a valid level ID!"
         }
