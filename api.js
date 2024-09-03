@@ -41,7 +41,7 @@ app.get("/v2/songs", async (req, res) => {
         songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true },
-        levelID: {$in: [req.query.levelID]} ?? { $ne: "" },
+        levelID: req.query.levelID ? {$in: [req.query.levelID]} : { $ne: "" },
         state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
     }).sort({name:1}).lean()
     }
@@ -107,7 +107,7 @@ app.get("/songs", async (req, res) => {
         songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true },
-        levelID: {$in: [req.query.levelID]} ?? { $ne: "" },
+        levelID: req.query.levelID ? {$in: [req.query.levelID]} : { $ne: "" },
         state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
     }).sort({name:1}).lean()
     }
