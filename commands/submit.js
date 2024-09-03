@@ -14,38 +14,6 @@ module.exports = {
         options: [
             {
                 type: 1,
-                name: "duplicate",
-                description: "Submit a duplicate song that's on the site w a different level ID",
-                options: [
-                    {
-                        type: 3,
-                        name: "song",
-                        description: "The song you want to duplicate",
-                        required: true,
-                        autocomplete: true
-                    },
-                    {
-                        type: 4,
-                        name: "level_id",
-                        description: "ID of the level",
-                        required: true
-                    },
-                    {
-                        type: 3,
-                        name: "showcase",
-                        description: "YT link for the thumbnail on the site",
-                        required: true
-                    },
-                    {
-                        type: 3,
-                        name: "comments",
-                        description: "Extra comments?",
-                        required: false
-                    },
-                ]
-            },
-            {
-                type: 1,
                 name: "mashup",
                 description: "Used for submitting mashups",
                 options: [
