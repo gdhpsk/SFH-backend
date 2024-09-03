@@ -8,6 +8,72 @@ const app = express.Router()
 
 // public
 
+app.get("/v2/songs", async (req, res) => {
+    /**
+     * Query Values:
+        * name?: string | mongoose.FilterQuery
+        * songID?: string | mongoose.FilterQuery
+        * format?: "gd" | "sfh"
+        * id?: string
+        * levelID?: string
+        * states?: string,string...
+     */
+    /**
+     [
+        * _id: string
+        * name: string
+        * songURL: string
+        * songName: string
+        * ytVideoID: string
+        * songID: string
+        * state: string
+        * downloadUrl: string
+        * levelID?: string[]
+     ]
+     */
+    req.query.format = req.query.format || "sfh"
+    let songs = [];
+    if(req.query.id) {
+        try {
+            songs = [{...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id}]
+        } catch(_){}
+    } else {
+        songs = await songsSchema.find({
+        name: req.query.name ?? { $exists: true },
+        songID: req.query.songID ?? { $exists: true },
+        levelID: {$in: [req.query.levelID]} ?? { $ne: "" },
+        state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
+    }).sort({name:1}).lean()
+    }
+    songs = songs.map(e => {
+        return {
+            ...e,
+            downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
+        }
+    })
+    if(req.query.format == "gd") {
+        let array = []
+        for(const song of songs) {
+                (async () => {
+                    let songData = await fetch(song.downloadUrl + "?onlyMetadata=true")
+                let metadata = await songData.json()
+                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                })()
+        }
+        let alr = setInterval(() => {
+            if(songs.length == array.length) {
+                clearInterval(alr)
+                res.json(array.join(":"))
+            }
+        }, 0)
+        return
+    }
+    if(req.query.format == "sfh") {
+    return res.json(songs)
+}
+return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a valid format!"})
+})
+
 app.get("/songs", async (req, res) => {
     /**
      * Query Values:
@@ -41,13 +107,14 @@ app.get("/songs", async (req, res) => {
         songs = await songsSchema.find({
         name: req.query.name ?? { $exists: true },
         songID: req.query.songID ?? { $exists: true },
-        levelID: req.query.levelID ?? { $ne: "" },
+        levelID: {$in: [req.query.levelID]} ?? { $ne: "" },
         state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
     }).sort({name:1}).lean()
     }
     songs = songs.map(e => {
         return {
             ...e,
+            levelID: e.levelID[0],
             downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
@@ -161,6 +228,7 @@ app.route("/songs")
             if(["loop"].includes(req.body.state)) {
                 req.body.levelID = process.env.levelSecret
             }
+            req.body.levelID = [req.body.levelID]
             let song = await songsSchema.create([req.body], { session })
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")
@@ -229,9 +297,9 @@ app.route("/songs")
         }
         await createTransaction(async (session) => {
             let song = await songsSchema.findById(req.body.id)
-            if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID ?? song.levelID)) throw new Error("You must specify a level ID for this type of song!")
+            if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID?.length ?? song.levelID?.length)) throw new Error("You must specify a level ID for this type of song!")
             if(["loop"].includes(req.body.state)) {
-                req.body.levelID = process.env.levelSecret
+                req.body.levelID = [process.env.levelSecret]
             }
             if(!req.body.data.downloadUrl) {
                 delete req.body.data.downloadUrl
