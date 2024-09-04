@@ -114,7 +114,7 @@ app.get("/songs", async (req, res) => {
     songs = songs.map(e => {
         return {
             ...e,
-            levelID: e.levelID[0],
+            levelID: e.levelID?.[0],
             downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
