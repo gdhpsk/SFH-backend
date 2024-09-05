@@ -301,11 +301,15 @@ app.route("/songs")
             if(["loop"].includes(req.body.state)) {
                 req.body.data.levelID = [process.env.levelSecret]
             }
+            if(!["mashup", "remix"].includes(req.body.data.state)) {
             let duplicates = await songsSchema.aggregate([
                 {
                   '$match': {
                     'levelID': {
                       '$in': req.body.data.levelID
+                    },
+                    'state': {
+                        '$nin': ["mashup", "remix"]
                     },
                     '_id': {
                         '$ne': new ObjectId(req.body.id)
@@ -335,6 +339,7 @@ app.route("/songs")
               if(duplicates.length) {
                 throw new Error(`Duplicate level IDs: ${duplicates[0].levelID.join(", ")}`)
               }
+            }
             if(!req.body.data.downloadUrl) {
                 delete req.body.data.downloadUrl
             }
