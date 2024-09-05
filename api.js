@@ -308,7 +308,7 @@ app.route("/songs")
                       '$in': req.body.data.levelID
                     },
                     '_id': {
-                        '$ne': {'$oid': req.body.id}
+                        '$ne': new ObjectId(req.body.id)
                     }
                   }
                 }, {
