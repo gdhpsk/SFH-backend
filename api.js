@@ -299,13 +299,13 @@ app.route("/songs")
             let song = await songsSchema.findById(req.body.id)
             if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID?.length ?? song.levelID?.length)) throw new Error("You must specify a level ID for this type of song!")
             if(["loop"].includes(req.body.state)) {
-                req.body.levelID = [process.env.levelSecret]
+                req.body.data.levelID = [process.env.levelSecret]
             }
             let duplicates = await songsSchema.aggregate([
                 {
                   '$match': {
                     'levelID': {
-                      '$in': req.body.levelID
+                      '$in': req.body.data.levelID
                     },
                     '_id': {
                         '$ne': {'$oid': req.body.id}
@@ -326,7 +326,7 @@ app.route("/songs")
                   '$project': {
                     'levelID': {
                       '$setIntersection': [
-                        '$levelID', req.body.levelID
+                        '$levelID', req.body.data.levelID
                       ]
                     }
                   }
