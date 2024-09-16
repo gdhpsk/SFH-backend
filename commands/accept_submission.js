@@ -1,4 +1,5 @@
 const { generateText, generateSongName, getYoutubeVideoId } = require("../helper");
+const changelogSchema = require("../schemas/changelog")
 
 module.exports = {
     data: {
@@ -55,7 +56,17 @@ module.exports = {
                     })
                     return;
                 }
-
+                // let changeSession = await changelogSchema.exists({id: interaction.member.user.id})
+                // if(changeSession) {
+                //     let user = await rest.get(Routes.user(json.userID))
+                //     await changelogSchema.updateOne({id: interaction.member.user.id}, {
+                //         $push: {
+                //             changes: {
+                                
+                //             }
+                //         }
+                //     })
+                // }
                 await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
                 let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
                     body: {

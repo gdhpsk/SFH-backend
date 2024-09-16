@@ -12,6 +12,7 @@ const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v10");
 const fs = require("fs")
 const nacl = require('tweetnacl');
+const changelogSchema = require("./schemas/changelog")
 let map = new Map()
 if (!process.env.MONGODB_URI) {
     dotenv.config()
@@ -181,6 +182,14 @@ http_server.listen(process.env.PORT || 3000);
     })
     console.log("Registered slash commands.");
 })()
+let changeStream = changelogSchema.watch([{$match: {operationType: "delete"}}])
+
+changeStream.on('change', async (next) => {
+    let id = next.documentKey._id
+    let changelog = await changelogSchema.findOne({id})
+    if(!changelog) return;
+    await changelogSchema.deleteOne({id})
+});
 
 setInterval(() => {
     map = new Map(map.entries().filter(e => e.invalidate > Date.now()))

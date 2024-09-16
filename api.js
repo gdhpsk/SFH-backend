@@ -234,6 +234,7 @@ app.route("/songs")
                 if(!data.ok) throw new Error("Invalid Download URL!")
                 let buffer = new Uint8Array(await data.arrayBuffer())
                 let key = ""
+                await fetch("https://storage.hpsk.me/api/bucket/ping")
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
                     let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
@@ -361,6 +362,7 @@ app.route("/songs")
                 }
                 let buffer = new Uint8Array(await data.arrayBuffer())
                 let key = ""
+                await fetch("https://storage.hpsk.me/api/bucket/ping")
                 for(let i = 0; i < buffer.length; i += 8000000) {
                     let arr = Array.from(buffer.slice(i, i+8000000))
                     let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?${i == 0 ? 'overwrite=true&' : ''}name=${req.body.id.toString()}.${req.body.data.filetype || song.filetype}`, {
@@ -407,6 +409,7 @@ app.route("/songs")
          */
         await createTransaction(async (session) => {
             let {urlHash} = await songsSchema.findOneAndDelete({ _id: new ObjectId(req.body.id) }, { session })
+            await fetch("https://storage.hpsk.me/api/bucket/ping")
             let end = await fetch("https://storage.hpsk.me/api/bucket/file/" + urlHash, {
                 method: "DELETE",
                 headers: {
