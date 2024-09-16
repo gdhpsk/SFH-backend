@@ -188,6 +188,24 @@ changeStream.on('change', async (next) => {
     let id = next.documentKey._id
     let changelog = await changelogSchema.findOne({id})
     if(!changelog) return;
+    let txt = `Added by <@${changelog.userID}>\n\n`
+    for(const change of changelog.changes) {
+        txt += `${change.title}\n`
+        if(change.songName) {
+            txt += `${change.songName}\n`
+        }
+        if(change.author) {
+            txt += `Submitted by ${change.author}\n`
+        }
+        if(change.author || change.songName) {
+            txt += "\n"
+        }
+    }
+    await rest.post(Routes.channelMessages("900009901097631785"), {
+        body: {
+            content: txt
+        }
+    })
     await changelogSchema.deleteOne({id})
 });
 

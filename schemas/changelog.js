@@ -12,7 +12,7 @@ const changelogSchema = new mongoose.Schema({
     changes: [changelogStruct],
     createdAt: {
         type: Date,
-        expires: 60
+        expires: 300
     }
 })
 

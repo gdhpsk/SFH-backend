@@ -56,17 +56,53 @@ module.exports = {
                     })
                     return;
                 }
-                // let changeSession = await changelogSchema.exists({id: interaction.member.user.id})
-                // if(changeSession) {
-                //     let user = await rest.get(Routes.user(json.userID))
-                //     await changelogSchema.updateOne({id: interaction.member.user.id}, {
-                //         $push: {
-                //             changes: {
-                                
-                //             }
-                //         }
-                //     })
-                // }
+                let changeSession = await changelogSchema.exists({userID: interaction.member.user.id, id: {$exists: false}})
+                if(changeSession) {
+                    let obj = {
+                        title: "",
+                        songName: "",
+                        author: ""
+                    }
+                    let emojis = {
+                        unrated: "<:Unrated:1040846574521172028>",
+                        challenge: "<:challenge:1098482063709065286>",
+                        loop: "<:MenuLoop:1228952088164438067>",
+                        gd: {
+                            auto: "<:Auto:1040840143818469406>",
+                            easy: "<:Easy:1040840315143196702>",
+                            normal: "<:Normal:1040840393522155610>",
+                            hard: "<:Hard:1040840442629075114>",
+                            harder: "<:Harder:1040840487529107476>",
+                            insane: "<:Insane:1040840553874604042>",
+                            "demon-easy": "<:EasyDemon:1040840830627360859>",
+                            "demon-medium": "<:MediumDemon:1040840870653599824>",
+                            "demon-hard": "<:Demon:1040840639350317156>",
+                            "demon-insane": "<:InsaneDemon:1040840948453757030>",
+                            "demon-extreme": "<:ExtremeDemon:1040840697902809168>"
+                        }
+                    }
+                    if(json.state == "mashup") {
+                        let user = await rest.get(Routes.user(json.userID))
+                        obj.author = user?.username || "unknown user"
+                    }
+                    if(!emojis[json.state]) {
+                        let level = await fetch(`https://gdbrowser.com/api/level/${json.levelID}`)
+                        if(!level.ok) {
+                            emojis[json.state] = emojis.unrated
+                        }
+                        let level_json = await level.json()
+                        emojis[json.state] = emojis.gd[level_json.partialDiff]
+                    }
+                    if(["mashup", "remix"].includes(json.state)) {
+                        obj.songName = generateSongName(json)
+                    }
+                    obj.title = `${json.state == "mashup" ? `**${json.name} (Mashup)**` : json.state == "remix" ? `**${json.name} (Remix)**`: json.state == "loop" ? `**${generateSongName(json)}**` : `**${json.name}** by ${json.author}`} ${emojis[json.state]}`
+                    await changelogSchema.updateOne({userID: interaction.member.user.id, id: {$exists: true}}, {
+                        $push: {
+                            changes: obj
+                        }
+                    })
+                }
                 await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
                 let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
                     body: {
