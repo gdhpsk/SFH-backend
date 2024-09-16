@@ -187,7 +187,7 @@ let changeStream = changelogSchema.watch([{$match: {operationType: "delete"}}])
 changeStream.on('change', async (next) => {
     let id = next.documentKey._id
     let changelog = await changelogSchema.findOne({id})
-    if(!changelog) return;
+    if(!changelog || !changelog?.changes) return;
     let txt = `Added by <@${changelog.userID}>\n\n`
     for(const change of changelog.changes) {
         txt += `${change.title}\n`
