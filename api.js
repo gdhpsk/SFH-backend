@@ -229,6 +229,9 @@ app.route("/songs")
                 req.body.levelID = process.env.levelSecret
             }
             req.body.levelID = [req.body.levelID]
+            if(!req.body.songURL) {
+                req.body.songURL = `https://www.newgrounds.com/audio/listen/${req.body.songID}`
+            }
             let song = await songsSchema.create([req.body], { session })
                 let data = await fetch(req.body.downloadUrl)
                 if(!data.ok) throw new Error("Invalid Download URL!")

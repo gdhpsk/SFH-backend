@@ -55,15 +55,15 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_link",
-                        description: "Showcase of the mashuped song",
+                        name: "showcase",
+                        description: "YT link for the thumbnail on the site",
                         required: true
                     },
                     {
                         type: 3,
-                        name: "showcase",
-                        description: "YT link for the thumbnail on the site",
-                        required: true
+                        name: "song_link",
+                        description: "Showcase of the mashuped song",
+                        required: false
                     },
                     {
                         type: 3,
@@ -104,15 +104,15 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_link",
-                        description: "Showcase of the remixed song",
+                        name: "showcase",
+                        description: "YT link for the thumbnail on the site",
                         required: true
                     },
                     {
                         type: 3,
-                        name: "showcase",
-                        description: "YT link for the thumbnail on the site",
-                        required: true
+                        name: "song_link",
+                        description: "Showcase of the remixed song",
+                        required: false
                     },
                     {
                         type: 3,
@@ -153,12 +153,6 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_link",
-                        description: "Link to the original song",
-                        required: true
-                    },
-                    {
-                        type: 3,
                         name: "showcase",
                         description: "Song showcase link for the thumbnail",
                         required: true
@@ -168,6 +162,12 @@ module.exports = {
                         name: "level_id",
                         description: "ID of the level",
                         required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_link",
+                        description: "Link to the original song",
+                        required: false
                     },
                     {
                         type: 3,
@@ -202,12 +202,6 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_link",
-                        description: "Link to the original song",
-                        required: true
-                    },
-                    {
-                        type: 3,
                         name: "showcase",
                         description: "Song showcase link",
                         required: true
@@ -217,6 +211,12 @@ module.exports = {
                         name: "level_id",
                         description: "ID of the level",
                         required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_link",
+                        description: "Link to the original song",
+                        required: false
                     },
                     {
                         type: 3,
@@ -251,12 +251,6 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "song_link",
-                        description: "Link to the original song",
-                        required: true
-                    },
-                    {
-                        type: 3,
                         name: "showcase",
                         description: "Song showcase link",
                         required: true
@@ -266,6 +260,12 @@ module.exports = {
                         name: "level_id",
                         description: "ID of the level",
                         required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_link",
+                        description: "Link to the original song",
+                        required: false
                     },
                     {
                         type: 3,
@@ -305,15 +305,15 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "song_link",
-                                description: "Link to the mashuped menu loop",
+                                name: "showcase",
+                                description: "Thumbnail for the website",
                                 required: true
                             },
                             {
                                 type: 3,
-                                name: "showcase",
-                                description: "Thumbnail for the website",
-                                required: true
+                                name: "song_link",
+                                description: "Link to the mashuped menu loop",
+                                required: false
                             },
                             {
                                 type: 3,
@@ -354,15 +354,15 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "song_link",
-                                description: "Link to the remixed menu loop",
+                                name: "showcase",
+                                description: "Thumbnail for the website",
                                 required: true
                             },
                             {
                                 type: 3,
-                                name: "showcase",
-                                description: "Thumbnail for the website",
-                                required: true
+                                name: "song_link",
+                                description: "Link to the remixed menu loop",
+                                required: false
                             },
                             {
                                 type: 3,
@@ -397,12 +397,6 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "song_link",
-                                description: "Link to the original menu loops",
-                                required: true
-                            },
-                            {
-                                type: 3,
                                 name: "texture_creator",
                                 description: "Texture pack creator",
                                 required: true
@@ -418,6 +412,12 @@ module.exports = {
                                 name: "showcase",
                                 description: "Thumbnail for the website",
                                 required: true
+                            },
+                            {
+                                type: 3,
+                                name: "song_link",
+                                description: "Link to the original menu loops",
+                                required: false
                             },
                             {
                                 type: 3,
@@ -452,15 +452,15 @@ module.exports = {
                             },
                             {
                                 type: 3,
-                                name: "song_link",
-                                description: "Link to the original menu loop",
+                                name: "showcase",
+                                description: "Thumbnail for the website",
                                 required: true
                             },
                             {
                                 type: 3,
-                                name: "showcase",
-                                description: "Thumbnail for the website",
-                                required: true
+                                name: "song_link",
+                                description: "Link to the original menu loop",
+                                required: false
                             },
                             {
                                 type: 3,
@@ -609,6 +609,7 @@ module.exports = {
         }
 
         let levelID = getOption("level_id")?.toString()
+        let songURL = getOption("song_link")?.toString()
         if (levelID) {
             let exists = await fetch(`https://gdbrowser.com/api/search/${levelID}?page=0&count=1`)
             if (!exists.ok) {
@@ -621,13 +622,20 @@ module.exports = {
             }
             let json = await exists.json()
             let level = json[0]
+            if(level.officialSong && !songURL) {
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                    body: {
+                        content: "Official songs must have a song URL attached to them!"
+                    }
+                })
+                return
+            }
             obj["name"] = level.name
             obj["author"] = level.author
             obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
             obj["levelID"] = levelID
             obj["state"] = ["Tiny", "Short"].includes(level.length) ? "challenge" : level.stars ? "rated" : "unrated"
         }
-        let songURL = getOption("song_link")?.toString()
         if(songURL) {
             let exists = await fetch(songURL)
             if (!exists.ok) {
@@ -639,6 +647,8 @@ module.exports = {
                 return
             }
             obj["songURL"] = songURL
+        } else {
+            obj['songURL'] = `https://www.newgrounds.com/audio/listen/${obj['songID']}`
         }
         let ytVideoId = getOption("showcase")?.toString()
         if(ytVideoId) {
