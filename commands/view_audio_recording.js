@@ -9,7 +9,7 @@ module.exports = {
     },
     async execute(interaction, rest, Routes) {
         if (interaction.application_id != process.env.app_id) return;
-        await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+        let msg = await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
             body: {
                 type: 4,
                 data: {
@@ -36,7 +36,7 @@ module.exports = {
                     data = Buffer.from(buffer)
                 break;
             }
-            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+            await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                 files: [
                     {
                         name:  `${json.songID}.mp3`,
@@ -59,7 +59,9 @@ module.exports = {
                         ]
                 }
             })
+            await rest.delete(Routes.webhookMessage(interaction.application_id, interaction.token, msg.id))
         } catch (_) {
+            console.log(_)
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: "Could not load the file successfully."

@@ -305,7 +305,7 @@ app.route("/songs")
             if(["loop"].includes(req.body.state)) {
                 req.body.data.levelID = [process.env.levelSecret]
             }
-            if(!["mashup", "remix"].includes(req.body.data.state)) {
+            if(!["mashup", "remix", "loop"].includes(req.body.data.state)) {
             let duplicates = await songsSchema.aggregate([
                 {
                   '$match': {
@@ -313,7 +313,7 @@ app.route("/songs")
                       '$in': req.body.data.levelID
                     },
                     'state': {
-                        '$nin': ["mashup", "remix"]
+                        '$nin': ["mashup", "remix", "loop"]
                     },
                     '_id': {
                         '$ne': new ObjectId(req.body.id)
