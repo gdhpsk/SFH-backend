@@ -16,6 +16,7 @@ module.exports = {
                 let obj = await req.json()
                 let field = interaction.data.components[0].components[0].custom_id
                 let value = interaction.data.components[0].components[0].value
+                try {
                 if(field == "state" && !['rated', 'unrated', 'challenge'].includes(field)) return; 
                 if (field == "levelID") {
                     let exists = await fetch(`https://gdbrowser.com/api/search/${value}?page=0&count=1`)
@@ -40,6 +41,9 @@ module.exports = {
                         return
                     }
                 }
+            } catch(_) {
+                return;
+            }
                 obj[field] = value
                 await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                     body: {

@@ -114,7 +114,11 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
             req.body.member = {
                 user: req.body.member?.user ?? req.body.user
             }
-            await (guild_cmds[type] || global_cmds[type]).execute(req.body, rest, Routes)
+            try {
+                await (guild_cmds[type] || global_cmds[type]).execute(req.body, rest, Routes)
+            } catch(_) {
+                console.log(_)
+            }
         }
             res.status(200).json({ type: 1 });
             break;
