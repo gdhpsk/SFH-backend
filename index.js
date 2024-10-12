@@ -189,7 +189,7 @@ http_server.listen(process.env.PORT || 3000);
 let changeStream = changelogSchema.watch([{$match: {operationType: "delete"}}])
 
 changeStream.on('change', async (next) => {
-    let id = next.documentKey._id
+    let id = next.documentKey._id.toString()
     let changelog = await changelogSchema.findOne({id})
     if(!changelog || !changelog?.changes?.length) return;
     let txt = `Added by <@${changelog.userID}>\n\n`
