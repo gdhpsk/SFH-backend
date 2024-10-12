@@ -26,6 +26,7 @@ module.exports = {
                             content: `You still have a valid changelog session going on!`
                         }
                     })
+                    return;
                 }
                 let entry = await changelogSchema.create({
                     userID: interaction.member.user.id,
