@@ -62,7 +62,7 @@ module.exports = {
             await rest.delete(Routes.webhookMessage(interaction.application_id, interaction.token, msg.id))
         } catch (_) {
             console.log(_)
-            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+            await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                 body: {
                     content: "Could not load the file successfully."
                 }
