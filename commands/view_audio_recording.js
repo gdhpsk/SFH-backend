@@ -64,7 +64,8 @@ module.exports = {
             console.log(_)
             await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                 body: {
-                    content: "Could not load the file successfully."
+                    content: "Could not load the file successfully.",
+                    flags:  (1 << 6) ^ (1 << 13)
                 }
             })
         }
