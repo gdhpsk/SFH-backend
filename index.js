@@ -12,6 +12,7 @@ const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v10");
 const fs = require("fs")
 const nacl = require('tweetnacl');
+const {MongoWatcher} = require("./watcher")
 const changelogSchema = require("./schemas/changelog")
 let map = new Map()
 if (!process.env.MONGODB_URI) {
@@ -186,37 +187,44 @@ http_server.listen(process.env.PORT || 3000);
     })
     console.log("Registered slash commands.");
 })()
-let changeStream = changelogSchema.watch([{$match: {operationType: "delete"}}])
 
-changeStream.on('change', async (next) => {
-    let id = next.documentKey._id.toString()
-    let changelog = await changelogSchema.findOne({id})
-    if(!changelog) return;
-    if(!changelog?.changes?.length) {
+const config = {
+    client: mongoose.connection, // if using mongosse, extract the client & provide it
+    collectionName: "changelogs",
+    pipeline: [{$match: {operationType: "delete"}}], // specify specific watch conditions
+    listeners: {
+      onChange: async (next) => {
+        let id = next.documentKey._id.toString()
+        let changelog = await changelogSchema.findOne({id})
+        if(!changelog) return;
+        if(!changelog?.changes?.length) {
+            await changelogSchema.deleteOne({id})
+            return;
+        };
+        let txt = `Added by <@${changelog.userID}>\n\n`
+        for(const change of changelog.changes) {
+            txt += `${change.title}\n`
+            if(change.songName) {
+                txt += `${change.songName}\n`
+            }
+            if(change.author) {
+                txt += `Submitted by ${change.author}\n`
+            }
+            if(change.author || change.songName) {
+                txt += "\n"
+            }
+        }
+        await rest.post(Routes.channelMessages("900009901097631785"), {
+            body: {
+                content: txt
+            }
+        })
         await changelogSchema.deleteOne({id})
-        return;
-    };
-    let txt = `Added by <@${changelog.userID}>\n\n`
-    for(const change of changelog.changes) {
-        txt += `${change.title}\n`
-        if(change.songName) {
-            txt += `${change.songName}\n`
-        }
-        if(change.author) {
-            txt += `Submitted by ${change.author}\n`
-        }
-        if(change.author || change.songName) {
-            txt += "\n"
-        }
-    }
-    await rest.post(Routes.channelMessages("900009901097631785"), {
-        body: {
-            content: txt
-        }
-    })
-    await changelogSchema.deleteOne({id})
-});
-
+      },
+    },
+  };
+  const myWatcher = new MongoWatcher(config);
+  myWatcher.watch();
 setInterval(() => {
     map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
 }, 5000)
