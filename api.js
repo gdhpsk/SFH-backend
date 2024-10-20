@@ -82,11 +82,12 @@ app.get("/v2/songs", async (req, res) => {
             return res.json(array.join(":"))
 		case 'library':
 			let songsString = '';
-			let tagsDictionary = {rated: 0, unrated: 1, mashup: 2, challenge: 3, remix: 4, loop: 5};
-            let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Mashup', '800003,Challenge', '800004,Remix', '800005,Menu loop'];
+			let tagsDictionary = {rated: 0, unrated: 1, challenge: 2};
+            let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Challenge'];
 			let tag = '';
             let count = 0;
 			for(const song of songs) {
+                if(tagsDictionary[song.state] == undefined) continue;
 				(async () => {
 					let songData = await pool.request({
                         path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
