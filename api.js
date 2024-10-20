@@ -109,6 +109,9 @@ app.get("/v2/songs", async (req, res) => {
 			let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Mashup;800003,Challenge;800004,Remix;800005,Menu loop;'
 			var deflated = zlib.deflateSync(library).toString("base64url");
 			return res.send(deflated);
+        case 'version':
+            return res.send(songs.length);
+            break;
 		default:
 			return res.json(songs);
 	}
