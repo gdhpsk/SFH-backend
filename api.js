@@ -55,7 +55,7 @@ app.get("/v2/songs", async (req, res) => {
         let array = []
         for(const song of songs) {
                 (async () => {
-                    let songData = await fetch(song.downloadUrl + "?onlyMetadata=true")
+                    let songData = await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?onlyMetadata=true`)
                 let metadata = await songData.json()
                 array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
                 })()
