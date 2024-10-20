@@ -20,7 +20,7 @@ app.get("/v2/songs", async (req, res) => {
      * Query Values:
         * name?: string | mongoose.FilterQuery
         * songID?: string | mongoose.FilterQuery
-        * format?: "gd" | "sfh"
+        * format?: "gd" | "library" | "version"
         * id?: string
         * levelID?: string
         * states?: string,string...

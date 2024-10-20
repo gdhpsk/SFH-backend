@@ -173,6 +173,7 @@ app.get("/socket/:id", async (req, res) => {
     return res.sendStatus(204)
 })
 
+app.use("/music", require("./music"))
 app.use("/", require("./api"))
 
 console.log("Listening on port http://localhost:3000")
