@@ -5,6 +5,7 @@ const { default: mongoose, MongooseError } = require("mongoose")
 const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
+const zlib = require("zlib")
 
 // public
 
@@ -51,26 +52,46 @@ app.get("/v2/songs", async (req, res) => {
             downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
-    if(req.query.format == "gd") {
-        let array = []
-        for(const song of songs) {
-                (async () => {
-                    let songData = await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?onlyMetadata=true`)
-                let metadata = await songData.json()
-                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
-                })()
-        }
-        let alr = setInterval(() => {
-            if(songs.length == array.length) {
-                clearInterval(alr)
-                res.json(array.join(":"))
-            }
-        }, 0)
-        return
-    }
-    if(req.query.format == "sfh") {
-    return res.json(songs)
-}
+	switch(req.query.format) {
+		case 'gd':
+			let array = []
+			for(const song of songs) {
+					(async () => {
+						let songData = await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?onlyMetadata=true`)
+					let metadata = await songData.json()
+					array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+					})()
+			}
+			let alr = setInterval(() => {
+				if(songs.length == array.length) {
+					clearInterval(alr)
+					res.json(array.join(":"))
+				}
+			}, 0)
+			return;
+			break;
+		case 'library':
+			let songsString = '';
+			let tagsDictionary = {rated: 0, unrated: 1, mashup: 2, challenge: 3, remix: 4, loop: 5};
+			let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Mashup', '800003,Challenge', '800004,Remix', '800005,Menu loop'];
+			let tag = '';
+			for(const song of songs) {
+				(async () => {
+					let songData = await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}?onlyMetadata=true`)
+					let metadata = await songData.json()
+					tag = '80000' + tagsDictionary[song.state];
+					songsString += `${song.songID},${song.songName},${song.songID},800006,${metadata.size},0,${tag},0, , , ,0;`
+				})()
+			}
+			let libraryVersion = songs.length;
+			let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Mashup;800003,Challenge;800004,Remix;800005,Menu loop;'
+			var deflated = zlib.deflateSync(library).toString("base64url");
+			return res.send(deflated);
+			break;
+		default:
+			return res.json(songs);
+			break;
+	}
 return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a valid format!"})
 })
 
