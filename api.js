@@ -83,6 +83,7 @@ app.get("/v2/songs", async (req, res) => {
 		case 'library':
 			let songsString = '';
 			let tagsDictionary = {rated: 0, unrated: 1, mashup: 2, challenge: 3, remix: 4, loop: 5};
+            let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Mashup', '800003,Challenge', '800004,Remix', '800005,Menu loop'];
 			let tag = '';
             let count = 0;
 			for(const song of songs) {
@@ -110,8 +111,7 @@ app.get("/v2/songs", async (req, res) => {
 			var deflated = zlib.deflateSync(library).toString("base64url");
 			return res.send(deflated);
         case 'version':
-            return res.send(songs.length);
-            break;
+            return res.json(songs.length);
 		default:
 			return res.json(songs);
 	}
