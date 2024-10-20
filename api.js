@@ -87,7 +87,10 @@ app.get("/v2/songs", async (req, res) => {
 			let tag = '';
             let count = 0;
 			for(const song of songs) {
-                if(tagsDictionary[song.state] == undefined) continue;
+                if(tagsDictionary[song.state] == undefined) {
+                    count++
+                    continue;
+                };
 				(async () => {
 					let songData = await pool.request({
                         path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
