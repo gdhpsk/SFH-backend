@@ -94,8 +94,8 @@ app.get("/v2/songs", async (req, res) => {
                         method: "GET"
                     })
 					let metadata = await songData.body.json()
-					tag = '80000' + tagsDictionary[song.state];
-					songsString += `${song.songID},${song.songName},${song.songID},800006,${metadata.size},0,${tag},0, , , ,0;`
+					tag = '.80000' + tagsDictionary[song.state] + '.';
+					songsString += `${song.songID},${song.songName},800006,${metadata.size},0,${tag},0, , , ,0;`
                     count++;
 				})()
 			}
