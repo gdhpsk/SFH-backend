@@ -112,7 +112,7 @@ app.get("/v2/songs", async (req, res) => {
 			var deflated = zlib.deflateSync(library).toString("base64url");
 			return res.send(deflated);
         case 'version':
-            return res.json(songs.length);
+            return res.json(songs.filter(e => ["rated", "unrated", "challenge"].includes(e.state)).length);
 		default:
 			return res.json(songs);
 	}
