@@ -68,7 +68,7 @@ app.get("/v2/songs", async (req, res) => {
                         method: "GET"
                     })
                     let metadata = await songData.body.json()
-                    array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                    array.push(`1~|~${song.songID}~|~2~|~${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
                 })()
 			}
            await new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ app.get("/v2/songs", async (req, res) => {
                     })
 					let metadata = await songData.body.json()
 					tag = '.80000' + tagsDictionary[song.state] + '.';
-					songsString += `${song.songID},${song.songName},800006,${metadata.size},0,${tag},0, , , ,0;`
+					songsString += `${song.songID},${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")},800006,${metadata.size},0,${tag},0, , , ,0;`
                     count++;
 				})()
 			}
