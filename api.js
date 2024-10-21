@@ -81,16 +81,13 @@ app.get("/v2/songs", async (req, res) => {
            })
             return res.json(array.join(":"))
 		case 'library':
+            songs = songs.filter(e => ["rated", "unrated", "challenge"].includes(e.state))
 			let songsString = '';
 			let tagsDictionary = {rated: 0, unrated: 1, challenge: 2};
             let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Challenge'];
 			let tag = '';
             let count = 0;
 			for(const song of songs) {
-                if(tagsDictionary[song.state] == undefined) {
-                    count++
-                    continue;
-                };
 				(async () => {
 					let songData = await pool.request({
                         path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
@@ -111,7 +108,7 @@ app.get("/v2/songs", async (req, res) => {
                 }, 10)
                })
 			let libraryVersion = songs.length;
-			let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Mashup;800003,Challenge;800004,Remix;800005,Menu loop;'
+			let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Challenge|'
 			var deflated = zlib.deflateSync(library).toString("base64url");
 			return res.send(deflated);
         case 'version':
