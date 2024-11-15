@@ -215,11 +215,12 @@ const config = {
                 txt += "\n"
             }
         }
-        await rest.post(Routes.channelMessages("900009901097631785"), {
+        let msg =await rest.post(Routes.channelMessages("900009901097631785"), {
             body: {
                 content: txt
             }
         })
+        await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
         await changelogSchema.deleteOne({id})
       },
     },
