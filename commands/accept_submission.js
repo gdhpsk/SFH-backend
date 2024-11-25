@@ -11,7 +11,7 @@ module.exports = {
         if(interaction.application_id != process.env.app_id) return;
         interaction.message = Object.values(interaction.data.resolved.messages)[0]
         let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
-        if (!user.roles.includes("899796185966075905")) return;
+        if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160")) return;
             try {
                 await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                     body: {

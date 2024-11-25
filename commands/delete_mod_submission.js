@@ -8,7 +8,7 @@ module.exports = {
     },
     async execute(interaction, rest, Routes) {
         let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
-        if (!user.roles.includes("899796185966075905")) return;
+        if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160")) return;
         if (interaction.type == 5) {
             try {
                 await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
