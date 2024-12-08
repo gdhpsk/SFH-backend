@@ -24,26 +24,34 @@ module.exports = {
                 let req = await fetch(metadata.attachments[0].url)
                 let json = await req.json()
                 await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
-                    body: {
-                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Deleted <:Cross:943424407722930287>`,
-                        components: []
-                    }
-                })
+                try {
+                    await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
+                        body: {
+                            content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Deleted <:Cross:943424407722930287>`,
+                            components: []
+                        }
+                    })
+                } catch(_) {
+
+                }
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                     body: {
-                        content: `Successfully deleted submission by <@${json.userID}>:\n\n${msg.content}`
+                        content: `Successfully deleted submission by <@${json.userID}>:\n\n${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Deleted <:Cross:943424407722930287>`
                     }
                 })
                 await rest.delete(`${json.webhookURL}/messages/${json.webhookMessage}`)
-                await rest.post(Routes.channelMessages(json.DMchannel), {
-                    body: {
-                        content: `Moderator <@${interaction.member.user.id}> has deleted this submission of yours. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`,
-                        message_reference: {
-                            message_id: json.DMmessage
+                try {
+                    await rest.post(Routes.channelMessages(json.DMchannel), {
+                        body: {
+                            content: `Moderator <@${interaction.member.user.id}> has deleted this submission of yours. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`,
+                            message_reference: {
+                                message_id: json.DMmessage
+                            }
                         }
-                    }
-                })
+                    })
+                } catch(_) {
+                    
+                }
             } catch (_) {
             }
             return;

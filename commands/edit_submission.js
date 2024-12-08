@@ -67,12 +67,14 @@ module.exports = {
                         }
                     ]
                 })
+                try {
                 await rest.patch(Routes.channelMessage(obj.DMchannel, obj.DMmessage), {
                     body: {
                         content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`,
                         components: []
                     }
                 })
+            } catch(_) {}
                 await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                     body: {
                         content: `Successfully edited submission!`,

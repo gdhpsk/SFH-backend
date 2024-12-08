@@ -25,7 +25,15 @@ module.exports = {
                 let json = await req.json()
                 interaction.message = await rest.get(`${json.webhookURL}/messages/${json.webhookMessage}`)
                 await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
+                try {
+                    await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
+                        body: {
+                            components: [],
+                            content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Rejected <:Cross:943424407722930287>`
+                        }
+                    })
+                } catch(_) {}
+                let msg = await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
                     body: {
                         components: [],
                         content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Rejected <:Cross:943424407722930287>`
@@ -36,20 +44,18 @@ module.exports = {
                         content: `Successfully rejected submission by <@${json.userID}>:\n\n${msg.content}`
                     }
                 })
-                await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
-                    body: {
-                        components: [],
-                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Rejected <:Cross:943424407722930287>`
-                    }
-                })
-                await rest.post(Routes.channelMessages(json.DMchannel), {
-                    body: {
-                        content: `Moderator <@${interaction.member.user.id}> has rejected this submission of yours. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`,
-                        message_reference: {
-                            message_id: json.DMmessage
+                try {
+                    await rest.post(Routes.channelMessages(json.DMchannel), {
+                        body: {
+                            content: `Moderator <@${interaction.member.user.id}> has rejected this submission of yours. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`,
+                            message_reference: {
+                                message_id: json.DMmessage
+                            }
                         }
-                    }
-                })
+                    })
+                } catch(_) {
+                    
+                }
             } catch (_) {
 
             }

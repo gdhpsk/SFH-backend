@@ -541,11 +541,6 @@ module.exports = {
                     }
                 }
             })
-            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
-                body: {
-                    content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. A message will be sent to you in DMs incase you want to edit / delete your submission. To view this commands, simply right click the message and click on "Apps".`
-                }
-            })
             try {
                 let dm = await rest.post(Routes.userChannels(), {
                     body: {
@@ -566,8 +561,17 @@ module.exports = {
                 })
                 obj["DMchannel"] = dm.id
                 obj["DMmessage"] = dm_message.id
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                    body: {
+                        content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. A message will be sent to you in DMs incase you want to edit / delete your submission. To view this commands, simply right click the message and click on "Apps".`
+                    }
+                })
             } catch (_) {
-
+                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                    body: {
+                        content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. Note that since you do not have DMs enabled for SFHBot, the only way to get your submission edited / deleted is by contacting a staff member. You also will not be notified about your submission, so check the status of your submission in the appropriate channels!`
+                    }
+                })
             }
             obj["webhookMessage"] = message.id
             obj["webhookURL"] = channel

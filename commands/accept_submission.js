@@ -104,13 +104,17 @@ module.exports = {
                     })
                 }
                 await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                let msg = await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
-                    body: {
-                        components: [],
-                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
-                    }
-                })
-                await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
+                try {
+                    await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
+                        body: {
+                            components: [],
+                            content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
+                        }
+                    })
+                } catch(_) {
+
+                }
+                let msg = await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
                     body: {
                         components: [],
                         content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
@@ -122,14 +126,18 @@ module.exports = {
                         flags: 1 << 6
                     }
                 })
-                await rest.post(Routes.channelMessages(json.DMchannel), {
-                    body: {
-                        content: `Moderator <@${interaction.member.user.id}> has accepted this submission of yours!`,
-                        message_reference: {
-                            message_id: json.DMmessage
+                try {
+                    await rest.post(Routes.channelMessages(json.DMchannel), {
+                        body: {
+                            content: `Moderator <@${interaction.member.user.id}> has accepted this submission of yours!`,
+                            message_reference: {
+                                message_id: json.DMmessage
+                            }
                         }
-                    }
-                })
+                    })
+                } catch(_) {
+                    
+                }
             } catch (_) {
                 console.log(_)
             }
