@@ -19,7 +19,16 @@ module.exports = {
                 let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
                 let req = await fetch(metadata.attachments[0].url)
                 let json = await req.json()
-                if(!json.DMchannel) {
+                try {
+                    await rest.post(Routes.channelMessages(json.DMchannel), {
+                        body: {
+                            content: interaction.data.components[0].components[0].value,
+                            message_reference: {
+                                message_id: json.DMmessage
+                            }
+                        }
+                    })
+                } catch(_) {
                     await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                         body: {
                             content: `Unfortunately, <@${json.userID}> does not have their DMs enabled for SFH bot. Try contacting them through the server maybe?`,
@@ -29,14 +38,6 @@ module.exports = {
                     return;
                 }
                 interaction.message = await rest.get(`${json.webhookURL}/messages/${json.webhookMessage}`)
-                await rest.post(Routes.channelMessages(json.DMchannel), {
-                    body: {
-                        content: interaction.data.components[0].components[0].value,
-                        message_reference: {
-                            message_id: json.DMmessage
-                        }
-                    }
-                })
                 await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                     body: {
                         content: `Successfully notified <@${json.userID}> about submission:\n\n${interaction.message.content}`,
