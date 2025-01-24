@@ -9,7 +9,7 @@ const zlib = require("zlib")
 const {Pool} = require("undici")
 
 const pool = new Pool('https://storage.hpsk.me', {
-    connections: 256, 
+    connections: 64, 
     pipelining: 1
   });
 
