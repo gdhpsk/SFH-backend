@@ -636,6 +636,7 @@ module.exports = {
             }
             obj["name"] = level.name
             obj["author"] = level.author
+            obj["downloads"] = level.downloads
             obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
             obj["levelID"] = levelID
             obj["state"] = ["Tiny", "Short"].includes(level.length) ? "challenge" : level.stars ? "rated" : "unrated"

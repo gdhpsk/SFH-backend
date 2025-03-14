@@ -19,13 +19,13 @@ if (!process.env.MONGODB_URI) {
     dotenv.config()
 }
 let rest = new REST({ version: "10" }).setToken(process.env.bot_token)
-mongoose.connect(process.env.MONGODB_URI, {
+process.env.keyPath ? mongoose.connect(process.env.MONGODB_URI, {
     dbName: "SFH",
     readPreference: "primaryPreferred",
     authSource: "$external",
     authMechanism: "MONGODB-X509",
     tlsCertificateKeyFile: process.env.keyPath
-})
+}) : mongoose.connect(process.env.MONGODB_URI)
 
 // let renewSongs = async () => {
 //     let everything = await songs.find({}, {levelID: 1, name: 1}).lean()

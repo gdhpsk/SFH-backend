@@ -57,7 +57,18 @@ module.exports = {
                     return;
                 }
                 let changeSession = await changelogSchema.exists({userID: interaction.member.user.id, id: {$exists: false}})
-                if(changeSession) {
+                if(!changeSession) {
+                    let entry = await changelogSchema.create({
+                                        userID: interaction.member.user.id,
+                                        createdAt: Date.now()
+                                    })
+                                    await changelogSchema.create({
+                                        userID: interaction.member.user.id,
+                                        id: entry._id.toString(),
+                                        changes: []
+                                    })
+                }
+                if(true) {
                     let obj = {
                         title: "",
                         songName: "",

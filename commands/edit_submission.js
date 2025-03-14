@@ -28,6 +28,7 @@ module.exports = {
                     obj["name"] = level.name
                     obj["author"] = level.author
                     obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
+                    obj["downloads"] = level.downloads
                 }
                 if (field == "songURL") {
                     let exists = await fetch(value)
