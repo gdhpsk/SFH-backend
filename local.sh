@@ -1,0 +1,1 @@
+docker build -t sfh-backend . && kubectl delete -f deployment.yaml && kubectl apply -f deployment.yaml

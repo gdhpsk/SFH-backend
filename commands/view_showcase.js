@@ -1,3 +1,5 @@
+let submissionSchema = require("../schemas/submission")
+
 module.exports = {
     data: {
         name: "View Showcase",
@@ -16,9 +18,7 @@ module.exports = {
                     }
                 }
             })
-            let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
-            let req = await fetch(metadata.attachments[0].url)
-            let json = await req.json()
+            let json = await submissionSchema.findById(submissionID)
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: `https://discord.com/channels/${process.env.server_id}/${interaction.message.channel_id}/${json.webhookMessage}\n-# Submission ID: ${submissionID}\n${json.showcase}`

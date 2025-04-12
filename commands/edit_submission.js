@@ -1,9 +1,10 @@
 const { generateText, getYoutubeVideoId } = require("../helper");
+const submissionSchema = require("../schemas/submission")
 
 module.exports = {
     data: {
         name: "edit_submission",
-        description: "Button used to edit a submission (user)",
+        description: "Button used to edit a submission",
         button: true
     },
     async execute(interaction, rest, Routes) {
@@ -11,9 +12,7 @@ module.exports = {
         if (interaction.type == 5) {
             try {
                 let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-                let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                let req = await fetch(metadata.attachments[0].url)
-                let obj = await req.json()
+                let obj = await submissionSchema.findById(submissionID)
                 let field = interaction.data.components[0].components[0].custom_id
                 let value = interaction.data.components[0].components[0].value
                 try {
@@ -52,6 +51,7 @@ module.exports = {
                     }
                 })
                 await rest.patch(`${obj.webhookURL}/messages/${obj.webhookMessage}`, {
+                    query: `thread_id=${obj.threadChannel}`,
                     body: {
                         content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:`,
                          allowed_mentions: {
@@ -59,23 +59,7 @@ module.exports = {
                          }
                     }
                 })
-                await rest.patch(Routes.channelMessage(process.env.metadata_channel, submissionID), {
-                    files: [
-                        {
-                            name: "metadata.json",
-                            contentType: "application/json",
-                            data: JSON.stringify(obj)
-                        }
-                    ]
-                })
-                try {
-                await rest.patch(Routes.channelMessage(obj.DMchannel, obj.DMmessage), {
-                    body: {
-                        content: `${generateText(obj)}\n\n-# Submission ID: ${submissionID}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`,
-                        components: []
-                    }
-                })
-            } catch(_) {}
+                await obj.save()
                 await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
                     body: {
                         content: `Successfully edited submission!`,
@@ -83,14 +67,13 @@ module.exports = {
                     }
                 })
             } catch (_) {
+                console.log(_)
             }
             return
         }
         let selected = interaction.data.values[0]
         let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-        let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
-        let req = await fetch(metadata.attachments[0].url)
-        let json = await req.json()
+        let json = await submissionSchema.findById(submissionID)
         let value = json[selected] ?? ""
         await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
             body: {

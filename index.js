@@ -80,6 +80,9 @@ let guild_cmds = {}
 let global_cmds = {}
 for (const file of commands) {
     let command_file = require(`./commands/${file}`)
+    if(process.env.development == "true") {
+        command_file.data.default_member_permissions = 8
+    }
     if(command_file.data.guild_id) {
         guild_cmds[command_file.data.name] = command_file
     } else {
@@ -91,7 +94,6 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
     // Your public key can be found on your application in the Developer Portal
 
     const interaction = req.body;
-
     // Verify the interaction's signature
     const signature = req.get('X-Signature-Ed25519');
     const timestamp = req.get('X-Signature-Timestamp');
@@ -99,7 +101,6 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
     if (!isValidSignature) {
         return res.status(401).end('invalid request signature');
     }
-
     switch (interaction.type) {
         case 1: // Ping
             res.json({ type: 1 });
@@ -177,9 +178,15 @@ app.use("/music", require("./music"))
 app.use("/", require("./api"))
 
 console.log("Listening on port http://localhost:3000")
-http_server.listen(process.env.PORT || 3000);
+http_server.listen(process.env.PORT || 3000, '0.0.0.0');
 
 (async () => {
+    // let webhook = await rest.post(Routes.channelWebhooks("1352870773588623404"), {
+    //     body: {
+    //         name: "Something"
+    //     }
+    // })
+    // console.log(webhook)
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
         body: Object.values(global_cmds) .filter(e => !e.data.button).map(e => e.data)
     })

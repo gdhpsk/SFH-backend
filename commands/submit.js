@@ -1,5 +1,6 @@
 const { generateText, getYoutubeVideoId } = require("../helper");
 const songsSchema = require("../schemas/songs")
+const submissionSchema = require("../schemas/submission")
 
 function escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -498,18 +499,11 @@ module.exports = {
         if (interaction.data.options[0].name == "menu") {
             getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
         }
-        async function generateEmbed(obj, channel, text) {
+        async function generateEmbed(obj, channel, text, tags) {
+            obj.tags = tags
             let file = await fetch(obj.songFile)
             const blob = await file.arrayBuffer()
-            let metadata = await rest.post(Routes.channelMessages(process.env.metadata_channel), {
-                files: [
-                    {
-                        name: "metadata.json",
-                        contentType: "application/json",
-                        data: JSON.stringify(obj)
-                    }
-                ]
-            })
+            let metadata = await submissionSchema.create(obj)
             let avatar = await fetch(interaction.member.user.avatar ? `https://cdn.discordapp.com/avatars/${interaction.member.user.id}/${interaction.member.user.avatar}.png` : !parseInt(interaction.member.user.discriminator) ? `https://cdn.discordapp.com/embed/avatars/${(parseInt(interaction.member.user.id) >> 22) % 6}.png` : `https://cdn.discordapp.com/embed/avatars/${parseInt(interaction.member.user.discriminator) % 5}.png`)
             let avatar_buffer = await avatar.arrayBuffer()
             try {
@@ -534,56 +528,71 @@ module.exports = {
                         data: Buffer.from(blob)
                     }
                 ],
+                query: "with_components=true",
                 body: {
-                    content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:`,
+                    thread_name: `${obj.duplicate ? '<:Copied:1277470308982325372>' : obj.state == 'unrated' ? '<:Unrated:1040846574521172028>' : obj.state == 'challenge' ? '<:challenge:1098482063709065286>' : obj.state == "rated" ? '<:Rated:1273186176932646912>' : obj.state == "remix" ? '<:Remix:1275641183275716744>' : obj.state == "mashup" ? '<:Mashup:1275630647943368724>' : '<:MenuLoop:1228952088164438067>'} From ${interaction.member.user.global_name || interaction.member.user.username}: ${obj.state == "mashup" ? `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}` : `${obj["name"]} by ${obj["author"]}`}`,
+                    content: `${text}\n\n-# Submission ID: ${metadata._id.toString()}\n-# Status: Pending :clock2:`,
                     allowed_mentions: {
                         parse: []
-                    }
+                    },
+                    components: [
+                        {
+                            type: 1,
+                            components: [
+                                {
+                                    type: 2,
+                                    emoji: {
+                                        name: "Check",
+                                        id: "943424424391090256"
+                                    },
+                                    style: 3,
+                                    custom_id: "accept"
+                                },
+                                {
+                                    type: 2,
+                                    emoji: {
+                                        name: "Cross",
+                                        id: "943424407722930287"
+                                    },
+                                    style: 4,
+                                    custom_id: "reject"
+                                },
+                                {
+                                    type: 2,
+                                    emoji: {
+                                        name: "✍️",
+                                        id: null
+                                    },
+                                    style: 1,
+                                    custom_id: "edit"
+                                },
+                                {
+                                    type: 2,
+                                    label: "Delete",
+                                    style: 4,
+                                    custom_id: "delete"
+                                }
+                            ]
+                        }
+                    ]
                 }
             })
-            try {
-                let dm = await rest.post(Routes.userChannels(), {
-                    body: {
-                        recipient_id: interaction.member.user.id
-                    }
-                })
-                let dm_message = await rest.post(Routes.channelMessages(dm.id), {
-                    files: [
-                        {
-                            name: `${obj.songID}.${song.content_type == "audio/mpeg" ? "mp3" : "ogg"}`,
-                            contentType: song.content_type,
-                            data: Buffer.from(blob)
-                        }
-                    ],
-                    body: {
-                        content: `${text}\n\n-# Submission ID: ${metadata.id}\n-# Status: Pending :clock2:\n\n-# Note that files CANNOT be edited. If you wish to edit a file, please delete your submission.`
-                    }
-                })
-                obj["DMchannel"] = dm.id
-                obj["DMmessage"] = dm_message.id
-                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
-                    body: {
-                        content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. A message will be sent to you in DMs incase you want to edit / delete your submission. To view this commands, simply right click the message and click on "Apps".`
-                    }
-                })
-            } catch (_) {
-                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
-                    body: {
-                        content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. Note that since you do not have DMs enabled for SFHBot, the only way to get your submission edited / deleted is by contacting a staff member. You also will not be notified about your submission, so check the status of your submission in the appropriate channels!`
-                    }
-                })
-            }
+            await rest.patch(Routes.channel(message.channel_id), {
+                body: {
+                    applied_tags: [...tags, "1352913222939971634"]
+                }
+            })
+            await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                body: {
+                    content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. Feel free to search for your submission in the respective forum if you want to edit it!`
+                }
+            })
             obj["webhookMessage"] = message.id
+            obj["threadChannel"] = message.channel_id
             obj["webhookURL"] = channel
             delete obj.songFile
-            await rest.patch(Routes.channelMessage(process.env.metadata_channel, metadata.id), {
-                files: [
-                    {
-                        name: "metadata.json",
-                        contentType: "application/json",
-                        data: JSON.stringify(obj)
-                    }
-                ]
+            await metadata.updateOne({
+                $set: obj
             })
         }
 
@@ -683,6 +692,7 @@ module.exports = {
             obj["texturePackShowcase"] = texture
         }
         let channel = ""
+        let tag = []
 
         if (interaction.data.options[0].name == "duplicate") {
             let s = null
@@ -707,6 +717,7 @@ module.exports = {
             }
             channel = process.env.nong_channel
         }
+        channel = process.env.nong_channel
 
         if (interaction.data.options[0].name == "mashup") {
             obj["songName"] = getOption("gdsong_name")
@@ -714,8 +725,8 @@ module.exports = {
             obj["mashupName"] = getOption("song_name")
             obj["mashupAuthor"] = getOption("song_author")
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.mashup_channel
             obj["state"] = "mashup"
+            tag = ["1352913707805704323"]
         }
 
         if (interaction.data.options[0].name == "remix") {
@@ -723,41 +734,42 @@ module.exports = {
             obj["remixAuthor"] = getOption("remix_author")
             obj["remixInfo"] = getOption("remix_info")
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.remix_channel
             obj["state"] = "remix"
+            tag = ["1352913733545889834"]
         }
 
         if (interaction.data.options[0].name == "unrated") {
             obj["songName"] = getOption("song_name")
             obj["songAuthor"] = getOption("song_author")
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.nong_channel
             obj["state"] = "unrated"
+            tag = ["1352913618621960224"]
         }
 
         if (interaction.data.options[0].name == "rated") {
             obj["songName"] = getOption("song_name")
             obj["songAuthor"] = getOption("song_author")
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.nong_channel
             obj["state"] = "rated"
+            tag = ["1352913599382818876"]
         }
 
         if (interaction.data.options[0].name == "challenge") {
             obj["songName"] = getOption("song_name")
             obj["songAuthor"] = getOption("song_author")
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.nong_channel
             obj["state"] = "challenge"
+            tag = ["1352913650846928926"]
         }
         if (interaction.data.options[0].name == "menu") {
+            tag = ["1352913777179234384"]
             obj["comments"] = getOption("comments") || ""
-            channel = process.env.menu_channel
             obj["state"] = "loop"
             obj["levelID"] = process.env.levelSecret
             obj["songID"] = "menuLoop"
             switch(interaction.data.options[0].options[0].name) {
                 case "mashup":
+                    tag.push("1352913707805704323")
                     obj["songName"] = getOption("gdsong_name")
                     obj["songAuthor"] = getOption("gdsong_author") || "Menu Loop"
                     obj["mashupName"] = getOption("song_name")
@@ -765,6 +777,7 @@ module.exports = {
                     obj["menuType"] = "mashup"
                 break;
                 case "remix":
+                    tag.push("1352913733545889834")
                     obj["remixType"] = getOption("remix_type")
                     obj["menuType"] = "remix"
                 break;
@@ -781,7 +794,7 @@ module.exports = {
                 break;
             }
         }
-        await generateEmbed(obj, channel, generateText(obj))
+        await generateEmbed(obj, channel, generateText(obj), tag)
         return
     } catch(_) {
         console.log(_)

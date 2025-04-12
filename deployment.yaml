@@ -1,0 +1,52 @@
+# Service to expose the web app on port 3005
+apiVersion: v1
+kind: Service
+metadata:
+  name: sfh-backend-service
+  labels:
+    app: sfh-backend
+spec:
+  type: LoadBalancer
+  selector:
+    app: sfh-backend
+  ports:
+    - port: 3005
+      targetPort: 3005
+      nodePort: 30002
+---
+# Deployment for your app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sfh-backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sfh-backend
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: sfh-backend
+    spec:
+      containers:
+        - name: sfh-backend-container
+          image: sfh-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3005
+          volumeMounts:
+            - name: ca-pem-volume
+              mountPath: /mnt/mongod.pem
+              subPath: mongod.pem
+              readOnly: true
+      volumes:
+        - name: ca-pem-volume
+          secret:
+            secretName: mongod-pem-secret

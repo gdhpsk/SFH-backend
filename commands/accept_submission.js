@@ -1,15 +1,15 @@
 const { generateText, generateSongName, getYoutubeVideoId } = require("../helper");
 const changelogSchema = require("../schemas/changelog")
+let submissionSchema = require("../schemas/submission")
 
 module.exports = {
     data: {
-        name: "Accept Submission",
+        name: "accept",
         guild_id: process.env.server_id,
-        type: 3
+        button: true
     },
     async execute(interaction, rest, Routes) {
         if(interaction.application_id != process.env.app_id) return;
-        interaction.message = Object.values(interaction.data.resolved.messages)[0]
         let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
         if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160")) return;
             try {
@@ -22,9 +22,7 @@ module.exports = {
                     }
                 })
                 let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-                let metadata = await rest.get(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                let req = await fetch(metadata.attachments[0].url)
-                let json = await req.json()
+                let json = await submissionSchema.findById(submissionID)
 
                 /// Database logic HERE:
                 let obj = {
@@ -114,21 +112,11 @@ module.exports = {
                         }
                     })
                 }
-                await rest.delete(Routes.channelMessage(process.env.metadata_channel, submissionID))
-                try {
-                    await rest.patch(Routes.channelMessage(json.DMchannel, json.DMmessage), {
-                        body: {
-                            components: [],
-                            content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
-                        }
-                    })
-                } catch(_) {
-
-                }
                 let msg = await rest.patch(`${json.webhookURL}/messages/${json.webhookMessage}`, {
+                    query: `thread_id=${json.threadChannel}`,
                     body: {
                         components: [],
-                        content: `${generateText(json)}\n\n-# Submission ID: ${metadata.id}\n-# Status: Accepted <:Check:943424424391090256>`
+                        content: `${generateText(json)}\n\n-# Submission ID: ${json._id.toString()}\n-# Status: Accepted <:Check:943424424391090256>`
                     }
                 })
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
@@ -137,18 +125,18 @@ module.exports = {
                         flags: 1 << 6
                     }
                 })
-                try {
-                    await rest.post(Routes.channelMessages(json.DMchannel), {
-                        body: {
-                            content: `Moderator <@${interaction.member.user.id}> has accepted this submission of yours!`,
-                            message_reference: {
-                                message_id: json.DMmessage
-                            }
-                        }
-                    })
-                } catch(_) {
-                    
-                }
+                await rest.post(Routes.webhook(interaction.application_id, interaction.token), {
+                    body: {
+                        content: `<@${json.userID}>, <@${interaction.member.user.id}> has accepted your submission`
+                    }
+                })
+                await rest.patch(Routes.channel(json.threadChannel), {
+                    body: {
+                        applied_tags: [...json.tags, "1352900969708650526"],
+                        locked: true
+                    }
+                })
+                await json.deleteOne()
             } catch (_) {
                 console.log(_)
             }
