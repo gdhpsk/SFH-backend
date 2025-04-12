@@ -186,7 +186,7 @@ http_server.listen(process.env.PORT || 3000, '0.0.0.0');
     //         name: "Something"
     //     }
     // })
-    // console.log(webhook)
+    // console.log(webhook) 
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
         body: Object.values(global_cmds) .filter(e => !e.data.button).map(e => e.data)
     })
