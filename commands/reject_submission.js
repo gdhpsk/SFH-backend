@@ -34,7 +34,8 @@ module.exports = {
                 await rest.patch(Routes.channel(json.threadChannel), {
                     body: {
                         applied_tags: [...json.tags, "1352901022426726471"],
-                        locked: true
+                        locked: true,
+                        archived: true
                     }
                 })
                 await json.deleteOne()
