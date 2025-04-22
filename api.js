@@ -46,7 +46,7 @@ app.get("/v2/songs", async (req, res) => {
         } catch(_){}
     } else {
         songs = await songsSchema.find({
-        name: req.query.name ?? { $exists: true },
+        name: req.query.name ? {name: {$regex: `(?i)${req.query.name}`}} : { $exists: true },
         songID: req.query.songID ?? { $exists: true },
         levelID: req.query.levelID ? {$in: [req.query.levelID]} : { $ne: "" },
         state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
