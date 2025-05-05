@@ -2,32 +2,25 @@ const mongoose = require("mongoose")
 
 const submissionSchema = new mongoose.Schema({
     "userID": {
-      "type": String,
-      required: true
+      "type": String
     },
     "name": {
-      "type": String,
-      required: true
+      "type": String
     },
     "author": {
-      "type": String,
-      required: true
+      "type": String
     },
     "downloads": {
-      "type": Number,
-      required: true
+      "type": Number
     },
     "songID": {
-      "type": String,
-      required: true
+      "type": String
     },
     "levelID": {
-      "type": String,
-      required: true
+      "type": String
     },
     "state": {
-      "type": String,
-      required: true
+      "type": String
     },
     "songURL": {
       "type": String
