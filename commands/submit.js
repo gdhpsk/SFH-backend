@@ -520,7 +520,7 @@ module.exports = {
                     }
                 })
             }
-            let thread_msg = `${obj.duplicate ? '<:Copied:1277470308982325372>' : obj.state == 'unrated' ? '<:Unrated:1040846574521172028>' : obj.state == 'challenge' ? '<:challenge:1098482063709065286>' : obj.state == "rated" ? '<:Rated:1273186176932646912>' : obj.state == "remix" ? '<:Remix:1275641183275716744>' : obj.state == "mashup" ? '♬' : '<:MenuLoop:1228952088164438067>'} ${obj.state == "mashup" ? `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}` : `${obj["name"]} by ${obj["author"]}`}`
+            let thread_msg = `${obj.duplicate ? '<:Copied:1277470308982325372>' : obj.state == 'unrated' ? '<:Unrated:1040846574521172028>' : obj.state == 'challenge' ? '<:challenge:1098482063709065286>' : obj.state == "rated" ? '<:Rated:1273186176932646912>' : obj.state == "remix" ? '<:Remix:1275641183275716744>' : obj.state == "mashup" ? '♬' : '<:MenuLoop:1228952088164438067>'} ${obj.state == "mashup" ? `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}` : obj.name ? `${obj["name"]} by ${obj["author"]}` :  `${obj["songName"]} by ${obj["songAuthor"]}`}`
             let message = await rest.post(channel, {
                 files: [
                     {
