@@ -11,6 +11,11 @@ module.exports = {
         if(interaction.application_id != process.env.app_id) return;
         if (interaction.type == 5) {
             try {
+                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                    body: {
+                        type: 6
+                    }
+                })
                 let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
                 let obj = await submissionSchema.findById(submissionID)
                 let field = interaction.data.components[0].components[0].custom_id
@@ -45,11 +50,6 @@ module.exports = {
                 return;
             }
                 obj[field] = value
-                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-                    body: {
-                        type: 6
-                    }
-                })
                 await rest.patch(`${obj.webhookURL}/messages/${obj.webhookMessage}`, {
                     query: `thread_id=${obj.threadChannel}`,
                     body: {
