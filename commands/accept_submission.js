@@ -10,10 +10,7 @@ module.exports = {
     },
     async execute(interaction, rest, Routes) {
         if(interaction.application_id != process.env.app_id) return;
-        let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
-        if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160")) return;
-            try {
-                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+         await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                     body: {
                         type: 5,
                         data: {
@@ -21,6 +18,9 @@ module.exports = {
                         }
                     }
                 })
+        let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
+        if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160")) return;
+            try {
                 let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
                 let json = await submissionSchema.findById(submissionID)
 

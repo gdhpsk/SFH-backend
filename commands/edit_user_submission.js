@@ -9,13 +9,6 @@ module.exports = {
     },
     async execute(interaction, rest, Routes) {
         if (interaction.application_id != process.env.app_id) return;
-        let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
-        let json = await submissionSchema.findById(submissionID)
-        if (interaction.message.webhook_id) {
-            let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
-            if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160") && json.userID != interaction.member.user.id) return;
-        }
-        try {
             await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                 body: {
                     type: 5,
@@ -24,6 +17,13 @@ module.exports = {
                     }
                 }
             })
+        let submissionID = interaction.message.content.split("Submission ID: ")[1].split("\n")[0]
+        let json = await submissionSchema.findById(submissionID)
+        if (interaction.message.webhook_id) {
+            let user = await rest.get(Routes.guildMember(process.env.server_id, interaction.member.user.id))
+            if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160") && json.userID != interaction.member.user.id) return;
+        }
+        try {
             let fields = json.duplicate ? editable["duplicate"] : json.menuType ? editable[json.state][json.menuType] : editable[json.state]
             let select_menu = {
                 type: 3,
