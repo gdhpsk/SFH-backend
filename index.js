@@ -12,7 +12,7 @@ const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v10");
 const fs = require("fs")
 const nacl = require('tweetnacl');
-const {MongoWatcher} = require("./watcher")
+const { MongoWatcher } = require("./watcher")
 const changelogSchema = require("./schemas/changelog")
 let map = new Map()
 if (!process.env.MONGODB_URI) {
@@ -80,10 +80,10 @@ let guild_cmds = {}
 let global_cmds = {}
 for (const file of commands) {
     let command_file = require(`./commands/${file}`)
-    if(process.env.development == "true") {
+    if (process.env.development == "true") {
         command_file.data.default_member_permissions = 8
     }
-    if(command_file.data.guild_id) {
+    if (command_file.data.guild_id) {
         guild_cmds[command_file.data.name] = command_file
     } else {
         global_cmds[command_file.data.name] = command_file
@@ -107,21 +107,21 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
             break;
         default:
             let type = req.body.data.custom_id ?? req.body.data.name ?? req.body.message.interaction?.name
-            if(!req.body.member && type == "Delete Submission") {
+            if (!req.body.member && type == "Delete Submission") {
                 req.body.member = {
                     user: req.body.member?.user ?? req.body.user
                 }
                 await global_cmds[type].execute(req.body, rest, Routes)
             } else {
-            req.body.member = {
-                user: req.body.member?.user ?? req.body.user
+                req.body.member = {
+                    user: req.body.member?.user ?? req.body.user
+                }
+                try {
+                    await (guild_cmds[type] || global_cmds[type]).execute(req.body, rest, Routes)
+                } catch (_) {
+                    console.log(_)
+                }
             }
-            try {
-                await (guild_cmds[type] || global_cmds[type]).execute(req.body, rest, Routes)
-            } catch(_) {
-                console.log(_)
-            }
-        }
             res.status(200).json({ type: 1 });
             break;
     }
@@ -188,7 +188,7 @@ http_server.listen(process.env.PORT || 3000, '0.0.0.0');
     // })
     // console.log(webhook) 
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
-        body: Object.values(global_cmds) .filter(e => !e.data.button).map(e => e.data)
+        body: Object.values(global_cmds).filter(e => !e.data.button).map(e => e.data)
     })
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, process.env.server_id), {
         body: Object.values(guild_cmds).filter(e => !e.data.button).map(e => e.data)
@@ -199,41 +199,61 @@ http_server.listen(process.env.PORT || 3000, '0.0.0.0');
 const config = {
     client: mongoose.connection, // if using mongosse, extract the client & provide it
     collectionName: "changelogs",
-    pipeline: [{$match: {operationType: "delete"}}], // specify specific watch conditions
+    pipeline: [{ $match: { operationType: "delete" } }], // specify specific watch conditions
     listeners: {
-      onChange: async (next) => {
-        let id = next.documentKey._id.toString()
-        let changelog = await changelogSchema.findOne({id})
-        if(!changelog) return;
-        if(!changelog?.changes?.length) {
-            await changelogSchema.deleteOne({id})
-            return;
-        };
-        let txt = `Added by <@${changelog.userID}>\n\n`
-        for(const change of changelog.changes) {
-            txt += `${change.title}\n`
-            if(change.songName) {
-                txt += `${change.songName}\n`
+        onChange: async (next) => {
+            try {
+                let id = next.documentKey._id.toString()
+                let changelog = await changelogSchema.findOne({ id })
+                if (!changelog) return;
+                if (!changelog?.changes?.length) {
+                    await changelogSchema.deleteOne({ id })
+                    return;
+                };
+                let txt = `Added by <@${changelog.userID}>\n\n`
+                for (const change of changelog.changes) {
+                    let temptxt = ""
+                    temptxt += `${change.title}\n`
+                    if (change.songName) {
+                        temptxt += `${change.songName}\n`
+                    }
+                    if (change.author) {
+                        temptxt += `Submitted by ${change.author}\n`
+                    }
+                    if (change.author || change.songName) {
+                        temptxt += "\n"
+                    }
+                    if (temptxt.length + txt.length > 4000) {
+                        let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
+                            body: {
+                                content: txt
+                            }
+                        })
+                        await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
+                        await new Promise((resolve, reject) => {
+                            setTimeout(resolve, 2000)
+                        })
+                        txt = ""
+                    }
+                    txt += temptxt
+                }
+                if(txt != "") {
+                    let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
+                            body: {
+                                content: txt
+                            }
+                        })
+                    await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
+                }
+                await changelogSchema.deleteOne({ id })
+            } catch (_) {
+                console.log(_)
             }
-            if(change.author) {
-                txt += `Submitted by ${change.author}\n`
-            }
-            if(change.author || change.songName) {
-                txt += "\n"
-            }
-        }
-        let msg =await rest.post(Routes.channelMessages("900009901097631785"), {
-            body: {
-                content: txt
-            }
-        })
-        await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
-        await changelogSchema.deleteOne({id})
-      },
+        },
     },
-  };
-  const myWatcher = new MongoWatcher(config);
-  myWatcher.watch();
+};
+const myWatcher = new MongoWatcher(config);
+myWatcher.watch();
 setInterval(() => {
     map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
 }, 5000)
