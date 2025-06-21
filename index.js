@@ -223,7 +223,7 @@ const config = {
                     if (change.author || change.songName) {
                         temptxt += "\n"
                     }
-                    if (temptxt.length + txt.length > 4000) {
+                    if (temptxt.length + txt.length > 2000) {
                         let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
                             body: {
                                 content: txt
