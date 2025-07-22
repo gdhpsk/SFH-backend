@@ -644,10 +644,17 @@ module.exports = {
                 })
                 return
             }
+            let songID = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
+            if(songID == "Can'tLetGo") {
+                songID = "CantLetGo"
+            }
+            if(songID == "ElectromanAdventures") {
+                songID = "Electroman"
+            }
             obj["name"] = level.name
             obj["author"] = level.author
             obj["downloads"] = level.downloads
-            obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
+            obj["songID"] = songID
             obj["levelID"] = levelID
             obj["state"] = ["Tiny", "Short"].includes(level.length) ? "challenge" : level.stars ? "rated" : "unrated"
         }

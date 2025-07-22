@@ -29,9 +29,17 @@ module.exports = {
                     }
                     let json = await exists.json()
                     let level = json[0]
+
+            let songID = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
+            if(songID == "Can'tLetGo") {
+                songID = "CantLetGo"
+            }
+            if(songID == "ElectromanAdventures") {
+                songID = "Electroman"
+            }
                     obj["name"] = level.name
                     obj["author"] = level.author
-                    obj["songID"] = level.officialSong ? level.songName.replaceAll(" ", "") : level.customSong
+                    obj["songID"] = songID
                     obj["downloads"] = level.downloads
                 }
                 if (field == "songURL") {
