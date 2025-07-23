@@ -18,7 +18,7 @@ let map = new Map()
 if (!process.env.MONGODB_URI) {
     dotenv.config()
 }
-let rest = new REST({ version: "10" }).setToken(process.env.bot_token)
+const rest = new REST({ version: "10" }).setToken(process.env.bot_token)
 process.env.keyPath ? mongoose.connect(process.env.MONGODB_URI, {
     dbName: "SFH",
     readPreference: "primaryPreferred",
