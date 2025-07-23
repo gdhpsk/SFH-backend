@@ -18,6 +18,11 @@ let map = new Map()
 if (!process.env.MONGODB_URI) {
     dotenv.config()
 }
+if(!process.env.bot_token) {
+    console.log("No bot token")
+} else {
+    console.log("Bot token found")
+}
 const rest = new REST({ version: "10" }).setToken(process.env.bot_token)
 process.env.keyPath ? mongoose.connect(process.env.MONGODB_URI, {
     dbName: "SFH",
