@@ -628,8 +628,8 @@ module.exports = {
                 }
             })
             if(tags.includes("1412792568768495677")) {
-                await rest.put(Routes.channelMessageReaction(message.channel_id, message.id, "👍"))
-                await rest.put(Routes.channelMessageReaction(message.channel_id, message.id, "👎"))
+                await rest.put(Routes.channelMessageOwnReaction(message.channel_id, message.id, "👍"))
+                await rest.put(Routes.channelMessageOwnReaction(message.channel_id, message.id, "👎"))
             }
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
