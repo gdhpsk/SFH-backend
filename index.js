@@ -14,6 +14,7 @@ const fs = require("fs")
 const nacl = require('tweetnacl');
 const { MongoWatcher } = require("./watcher")
 const changelogSchema = require("./schemas/changelog")
+const jwt = require("jsonwebtoken")
 let map = new Map()
 if (!process.env.MONGODB_URI) {
     dotenv.config()
@@ -56,11 +57,29 @@ process.env.keyPath ? mongoose.connect(process.env.MONGODB_URI, {
 // renewSongs()
 
 // cron.schedule("0 0 * * *", renewSongs)
-
-app.use(cors())
+app.use(cors({
+    origin: (origin, cb) => {
+          const allowedOrigins = [
+    process.env.WEBSITE_URL,
+    process.env.API_URL,
+  ];
+  if (allowedOrigins.includes(origin)) {
+    return cb(null, origin);
+  } else {
+    return cb(null, "*")
+  }
+    },
+    credentials: true
+}))
 app.use(express.urlencoded({ extended: true }))
 
 app.set("view engine", "ejs")
+if(process.env.DEVELOPMENT) {
+    app.use((req, res, next) => {
+        console.log(`[${req.method}] ${req.path}`)
+        next()
+    })
+}
 
 const PUBLIC_KEY = process.env.public_key;
 const CLIENT_ID = process.env.app_id;
@@ -134,7 +153,7 @@ app.post("/interactions", express.json({ verify: rawBodySaver }), async (req, re
 
 });
 app.use(express.json())
-app.use(cookieParser())
+app.use(cookieParser(process.env.SUPER_SECRET))
 
 app.get("/socket", async (req, res) => {
     let uuid = crypto.randomUUID()
@@ -179,6 +198,45 @@ app.get("/socket/:id", async (req, res) => {
     return res.sendStatus(204)
 })
 
+app.get("/oauth2", async (req, res) => {
+    let params = new URLSearchParams({
+            client_id: process.env.client_id,
+            grant_type: "authorization_code",
+            client_secret: process.env.client_secret,
+            code: req.query.code,
+            redirect_uri: `${process.env.API_URL}/oauth2`
+        })
+        try {
+    let current_date = Math.round(Date.now() / 1000)
+    let token = await fetch("https://discord.com/api/oauth2/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params.toString() 
+    })
+    let json = await token.json()
+    if(json.expires_in) {
+        json.expires_in = current_date + json.expires_in
+    } else {
+        throw new Error()
+    }
+    let web_token = jwt.sign(JSON.stringify(json), process.env.SUPER_SECRET)
+
+    res.cookie('token', web_token, {
+        signed: true,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax', // or 'none' if cross-site (not just subdomain)
+        domain: new URL(process.env.API_URL).host.split(".").slice(1).join("."), // allows subdomain sharing
+    });
+    res.redirect(process.env.WEBSITE_URL)
+        } catch(_) {
+            console.log(_)
+            res.status(400).json({error: "400 BAD REQUEST", message: "Not a valid OAuth token"})
+        }
+})
+
 app.use("/music", require("./music"))
 app.use("/", require("./api"))
 
@@ -201,64 +259,64 @@ http_server.listen(process.env.PORT || 3000, '0.0.0.0');
     console.log("Registered slash commands.");
 })()
 
-const config = {
-    client: mongoose.connection, // if using mongosse, extract the client & provide it
-    collectionName: "changelogs",
-    pipeline: [{ $match: { operationType: "delete" } }], // specify specific watch conditions
-    listeners: {
-        onChange: async (next) => {
-            try {
-                let id = next.documentKey._id.toString()
-                let changelog = await changelogSchema.findOne({ id })
-                if (!changelog) return;
-                if (!changelog?.changes?.length) {
-                    await changelogSchema.deleteOne({ id })
-                    return;
-                };
-                let txt = `Added by <@${changelog.userID}>\n\n`
-                for (const change of changelog.changes) {
-                    let temptxt = ""
-                    temptxt += `${change.title}\n`
-                    if (change.songName) {
-                        temptxt += `${change.songName}\n`
-                    }
-                    if (change.author) {
-                        temptxt += `Submitted by ${change.author}\n`
-                    }
-                    if (change.author || change.songName) {
-                        temptxt += "\n"
-                    }
-                    if (temptxt.length + txt.length > 2000) {
-                        let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
-                            body: {
-                                content: txt
-                            }
-                        })
-                        await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
-                        await new Promise((resolve, reject) => {
-                            setTimeout(resolve, 2000)
-                        })
-                        txt = ""
-                    }
-                    txt += temptxt
-                }
-                if(txt != "") {
-                    let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
-                            body: {
-                                content: txt
-                            }
-                        })
-                    await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
-                }
-                await changelogSchema.deleteOne({ id })
-            } catch (_) {
-                console.log(_)
-            }
-        },
-    },
-};
-const myWatcher = new MongoWatcher(config);
-myWatcher.watch();
-setInterval(() => {
-    map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
-}, 5000)
+// const config = {
+//     client: mongoose.connection, // if using mongosse, extract the client & provide it
+//     collectionName: "changelogs",
+//     pipeline: [{ $match: { operationType: "delete" } }], // specify specific watch conditions
+//     listeners: {
+//         onChange: async (next) => {
+//             try {
+//                 let id = next.documentKey._id.toString()
+//                 let changelog = await changelogSchema.findOne({ id })
+//                 if (!changelog) return;
+//                 if (!changelog?.changes?.length) {
+//                     await changelogSchema.deleteOne({ id })
+//                     return;
+//                 };
+//                 let txt = `Added by <@${changelog.userID}>\n\n`
+//                 for (const change of changelog.changes) {
+//                     let temptxt = ""
+//                     temptxt += `${change.title}\n`
+//                     if (change.songName) {
+//                         temptxt += `${change.songName}\n`
+//                     }
+//                     if (change.author) {
+//                         temptxt += `Submitted by ${change.author}\n`
+//                     }
+//                     if (change.author || change.songName) {
+//                         temptxt += "\n"
+//                     }
+//                     if (temptxt.length + txt.length > 2000) {
+//                         let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
+//                             body: {
+//                                 content: txt
+//                             }
+//                         })
+//                         await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
+//                         await new Promise((resolve, reject) => {
+//                             setTimeout(resolve, 2000)
+//                         })
+//                         txt = ""
+//                     }
+//                     txt += temptxt
+//                 }
+//                 if(txt != "") {
+//                     let msg = await rest.post(Routes.channelMessages("900009901097631785"), {
+//                             body: {
+//                                 content: txt
+//                             }
+//                         })
+//                     await rest.post(Routes.channelMessageCrosspost("900009901097631785", msg.id))
+//                 }
+//                 await changelogSchema.deleteOne({ id })
+//             } catch (_) {
+//                 console.log(_)
+//             }
+//         },
+//     },
+// };
+// const myWatcher = new MongoWatcher(config);
+// myWatcher.watch();
+// setInterval(() => {
+//     map = new Map(map.entries().filter(e => e.invalidate > Date.now()))
+// }, 5000)

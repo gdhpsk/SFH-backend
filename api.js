@@ -6,12 +6,19 @@ const { ObjectId } = require("bson")
 const adminsSchema = require("./schemas/admins")
 const app = express.Router()
 const zlib = require("zlib")
-const {Pool} = require("undici")
-
+const { Pool } = require("undici")
+const jwt = require("jsonwebtoken")
 const pool = new Pool('https://storage.hpsk.me', {
-    connections: 8, 
+    connections: 8,
     pipelining: 1
-  });
+});
+const { REST } = require("@discordjs/rest")
+const { Routes } = require("discord-api-types/v10");
+const {Stripe} = require("stripe")
+const rest = new REST({ version: "10" }).setToken(process.env.bot_token)
+const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY);
+const paymentsSchema = require("./schemas/stripe")
+
 
 // public
 
@@ -40,17 +47,17 @@ app.get("/v2/songs", async (req, res) => {
      */
     req.query.format = req.query.format || "sfh"
     let songs = [];
-    if(req.query.id) {
+    if (req.query.id) {
         try {
-            songs = [{...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id}]
-        } catch(_){}
+            songs = [{ ...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id }]
+        } catch (_) { }
     } else {
         songs = await songsSchema.find({
-        name: req.query.name ? {$regex: `(?i)${req.query.name}`} : { $exists: true },
-        songID: req.query.songID ?? { $exists: true },
-        levelID: req.query.levelID ? {$in: [req.query.levelID]} : { $ne: "" },
-        state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
-    }).sort({name:1}).lean()
+            name: req.query.name ? { $regex: `(?i)${req.query.name}` } : { $exists: true },
+            songID: req.query.songID ?? { $exists: true },
+            levelID: req.query.levelID ? { $in: [req.query.levelID] } : { $ne: "" },
+            state: req.query.states ? { $in: req.query.states.split(",") } : { $exists: true }
+        }).sort({ name: 1 }).lean()
     }
     songs = songs.map(e => {
         return {
@@ -58,64 +65,64 @@ app.get("/v2/songs", async (req, res) => {
             downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
-	switch(req.query.format) {
-		case 'gd':
-			let array = []
-			for(const song of songs) {
+    switch (req.query.format) {
+        case 'gd':
+            let array = []
+            for (const song of songs) {
                 (async () => {
                     let songData = await pool.request({
                         path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
                         method: "GET"
                     })
                     let metadata = await songData.body.json()
-                    array.push(`1~|~${song.songID}~|~2~|~${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                    array.push(`1~|~${song.songID}~|~2~|~${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000) / 100}~|~10~|~${song.downloadUrl}`)
                 })()
-			}
-           await new Promise((resolve, reject) => {
-            let alr = setInterval(() => {
-                if(songs.length == array.length) {
-                    clearInterval(alr)
-                    return resolve("")
-                }
-            }, 10)
-           })
-            return res.json(array.join(":"))
-		case 'library':
-            songs = songs.filter(e => ["rated", "unrated", "challenge"].includes(e.state))
-			let songsString = '';
-			let tagsDictionary = {rated: 0, unrated: 1, challenge: 2};
-            let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Challenge'];
-			let tag = '';
-            let count = 0;
-			for(const song of songs) {
-				(async () => {
-					let songData = await pool.request({
-                        path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
-                        method: "GET"
-                    })
-					let metadata = await songData.body.json()
-					tag = '.80000' + tagsDictionary[song.state] + '.';
-					songsString += `${song.songID},${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")},800006,${metadata.size},0,${tag},0, , , ,0;`
-                    count++;
-				})()
-			}
+            }
             await new Promise((resolve, reject) => {
                 let alr = setInterval(() => {
-                    if(songs.length == count) {
+                    if (songs.length == array.length) {
                         clearInterval(alr)
                         return resolve("")
                     }
                 }, 10)
-               })
-			let libraryVersion = songs.length;
-			let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Challenge|'
-			var deflated = zlib.deflateSync(library).toString("base64url");
-			return res.send(deflated);
+            })
+            return res.json(array.join(":"))
+        case 'library':
+            songs = songs.filter(e => ["rated", "unrated", "challenge"].includes(e.state))
+            let songsString = '';
+            let tagsDictionary = { rated: 0, unrated: 1, challenge: 2 };
+            let tagsArray = ['800000,Rated', '800001,Unrated', '800002,Challenge'];
+            let tag = '';
+            let count = 0;
+            for (const song of songs) {
+                (async () => {
+                    let songData = await pool.request({
+                        path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
+                        method: "GET"
+                    })
+                    let metadata = await songData.body.json()
+                    tag = '.80000' + tagsDictionary[song.state] + '.';
+                    songsString += `${song.songID},${song.songName.replaceAll(";", ":").replaceAll(",", ".").replaceAll("|", "/")},800006,${metadata.size},0,${tag},0, , , ,0;`
+                    count++;
+                })()
+            }
+            await new Promise((resolve, reject) => {
+                let alr = setInterval(() => {
+                    if (songs.length == count) {
+                        clearInterval(alr)
+                        return resolve("")
+                    }
+                }, 10)
+            })
+            let libraryVersion = songs.length;
+            let library = libraryVersion + '|800006,SongFileHub;|' + songsString + '|800000,Rated;800001,Unrated;800002,Challenge|'
+            var deflated = zlib.deflateSync(library).toString("base64url");
+            return res.send(deflated);
         case 'version':
             return res.json(songs.filter(e => ["rated", "unrated", "challenge"].includes(e.state)).length);
-		default:
-			return res.json(songs);
-	}
+        default:
+            return res.json(songs);
+    }
 })
 
 app.get("/songs", async (req, res) => {
@@ -143,17 +150,17 @@ app.get("/songs", async (req, res) => {
      */
     req.query.format = req.query.format || "sfh"
     let songs = [];
-    if(req.query.id) {
+    if (req.query.id) {
         try {
-            songs = [{...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id}]
-        } catch(_){}
+            songs = [{ ...(await songsSchema.findById(req.query.id).lean()), _id: req.query.id }]
+        } catch (_) { }
     } else {
         songs = await songsSchema.find({
-        name: req.query.name ?? { $exists: true },
-        songID: req.query.songID ?? { $exists: true },
-        levelID: req.query.levelID ? {$in: [req.query.levelID]} : { $ne: "" },
-        state: req.query.states ? {$in: req.query.states.split(",")} : { $exists: true }
-    }).sort({name:1}).lean()
+            name: req.query.name ?? { $exists: true },
+            songID: req.query.songID ?? { $exists: true },
+            levelID: req.query.levelID ? { $in: [req.query.levelID] } : { $ne: "" },
+            state: req.query.states ? { $in: req.query.states.split(",") } : { $exists: true }
+        }).sort({ name: 1 }).lean()
     }
     songs = songs.map(e => {
         return {
@@ -162,37 +169,37 @@ app.get("/songs", async (req, res) => {
             downloadUrl: `https://api.songfilehub.com/song/${e._id.toString()}?download=true&name=${e.songID}`
         }
     })
-    if(req.query.format == "gd") {
+    if (req.query.format == "gd") {
         let array = []
-        for(const song of songs) {
+        for (const song of songs) {
             (async () => {
                 let songData = await pool.request({
                     path: `/api/bucket/file/${song.urlHash}?onlyMetadata=true`,
                     method: "GET"
                 })
                 let metadata = await songData.body.json()
-                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000)/100}~|~10~|~${song.downloadUrl}`)
+                array.push(`1~|~${song.songID}~|~2~|~${song.songName}~|~4~|~SongFileHub~|~5~|~${Math.round(metadata.size / 10000) / 100}~|~10~|~${song.downloadUrl}`)
             })()
         }
         let alr = setInterval(() => {
-            if(songs.length == array.length) {
+            if (songs.length == array.length) {
                 clearInterval(alr)
                 res.json(array.join(":"))
             }
         }, 10)
         return
     }
-    if(req.query.format == "sfh") {
-    return res.json(songs)
-}
-return res.status(400).json({error: "400 BAD REQUEST", message: "Please input a valid format!"})
+    if (req.query.format == "sfh") {
+        return res.json(songs)
+    }
+    return res.status(400).json({ error: "400 BAD REQUEST", message: "Please input a valid format!" })
 })
 
 app.get("/audio/:id", async (req, res) => {
     try {
         let song = await songsSchema.findById(req.params.id)
-        return res.render("video.ejs", {audio: `https://api.songfilehub.com/song/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID})
-    } catch(_) {
+        return res.render("video.ejs", { audio: `https://api.songfilehub.com/song/${req.params.id}`, name: song.name, songName: song.songName, songID: song.songID })
+    } catch (_) {
         return res.render("video.ejs")
     }
 })
@@ -206,11 +213,160 @@ app.get("/song/:id", async (req, res) => {
                 downloads: req.query.download && !req.query.onlyMetadata ? 1 : 0
             }
         })
-        if(!song) throw new Error()
-        res.set({range: req.header("range") || "", "user-agent": req.header("user-agent") || ""})
+        if (!song) throw new Error()
+        res.set({ range: req.header("range") || "", "user-agent": req.header("user-agent") || "" })
         return res.redirect(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}${Object.keys(req.query).length ? `?${new URLSearchParams(req.query).toString()}` : ``}`)
-    } catch(_) {
-        return res.status(404).json({error: "404 NOT FOUND", message: "Could not find the Object ID"})
+    } catch (_) {
+        return res.status(404).json({ error: "404 NOT FOUND", message: "Could not find the Object ID" })
+    }
+})
+
+// async function adjustOrigin(req, res, next) {
+//   const origin = req.headers.origin;
+//     console.log(origin)
+//   // Whitelist logic (optional)
+//   const allowedOrigins = [
+//     process.env.WEBSITE_URL,
+//     process.env.API_URL,
+//   ];
+
+//   if (allowedOrigins.includes(origin)) {
+//     res.setHeader('Access-Control-Allow-Origin', origin);
+//   }
+
+//   res.setHeader('Access-Control-Allow-Credentials', 'true');
+//   next();
+// }
+
+async function discordAuth(req, res, next) {
+    const token = req.signedCookies?.token
+    if (!token) return res.status(404).json({ error: "404 NOT FOUND", message: "Could not find the given token." })
+    let decoded = jwt.verify(token, process.env.SUPER_SECRET)
+    if (decoded.expires_in <= Math.round(Date.now() / 1000)) {
+        try {
+            const params = new URLSearchParams({
+                client_id: process.env.client_id,
+                client_secret: process.env.client_secret,
+                grant_type: "refresh_token",
+                refresh_token: decoded.refresh_token
+            })
+            const current_date = Math.round(Date.now() / 1000)
+            let token = await fetch("https://discord.com/api/oauth2/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: params.toString()
+            })
+            let json = await token.json()
+            if (json.expires_in) {
+                json.expires_in = current_date + json.expires_in
+            } else {
+                throw new Error()
+            }
+            decoded = json
+            let web_token = jwt.sign(JSON.stringify(json), process.env.SUPER_SECRET)
+
+            res.cookie('token', web_token, {
+                signed: true,
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax', // or 'none' if cross-site (not just subdomain)
+                domain: new URL(process.env.API_URL).host.split(".").slice(1).join("."), // allows subdomain sharing
+            });
+        } catch (_) {
+            res.clearCookie("token", { signed: true, domain: new URL(process.env.API_URL).host.split(".").slice(1).join(".") })
+            return res.status(400).json({ error: "400 BAD REQUEST", message: "Invalid Auth Token" })
+        }
+    }
+    req.user = decoded
+    next()
+}
+
+app.get("/user", discordAuth, async (req, res) => {
+    try {
+        let user_info = await fetch("https://discord.com/api/v10/users/@me", {
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${req.user.access_token}`
+            },
+        })
+        let json = await user_info.json()
+        let admin = await adminsSchema.exists({ admins: { $in: [json.id || "123"] } })
+        let premium = await paymentsSchema.findOne({ userId: [json.id || "123"] })
+        return res.json({ ...json, admin, premium })
+    } catch (_) {
+        return res.status(502).json({ error: "502 INTERNAL SERVER ERROR", message: "Something went wrong. try again" })
+    }
+})
+
+app.post("/checkout", discordAuth, async (req, res) => {
+    // server: create checkout session
+     let user_info = await fetch("https://discord.com/api/v10/users/@me", {
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${req.user.access_token}`
+            },
+        })
+        let json = await user_info.json()
+    const exists = await paymentsSchema.exists({userId: json.id})
+    if(exists) return;
+    const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price: req.body.priceId, quantity: 1 }],
+        success_url: `${process.env.API_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.API_URL}/billing/cancel`,
+    });
+    return res.json({ id: session.id })
+})
+
+app.get("/billing/cancel", discordAuth, async (req, res) => {
+    return res.redirect(process.env.WEBSITE_URL)
+})
+
+app.get("/billing/success", discordAuth, async (req, res) => {
+  try {
+    let user_info = await fetch("https://discord.com/api/v10/users/@me", {
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${req.user.access_token}`
+            },
+        })
+        let json = await user_info.json()
+    const { session_id } = req.query;
+    if (!session_id) return res.status(400).json({ error: "Missing session_id" });
+
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status === "paid") {
+      await paymentsSchema.create({ userId: json.id, paymentType: 0, subscriberSince: Date.now() })
+
+    return res.redirect(`${process.env.WEBSITE_URL}?session=${session.id}`)
+    } else {
+      return res.json({ ok: false });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/revoke", discordAuth, async (req, res) => {
+    try {
+        res.clearCookie("token", { signed: true, domain: new URL(process.env.API_URL).host.split(".").slice(1).join(".") })
+        const params = new URLSearchParams({
+            client_id: process.env.client_id,
+            client_secret: process.env.client_secret,
+            token: req.user.access_token
+        })
+        await fetch("https://discord.com/api/oauth2/token/revoke", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+        })
+        return res.sendStatus(204)
+    } catch (_) {
+        return res.status(502).json({ error: "502 INTERNAL SERVER ERROR", message: "Something went wrong. try again" })
     }
 })
 
@@ -238,16 +394,41 @@ async function createTransaction(cb, res) {
     }
 }
 
+// app.use(adjustOrigin)
+app.use(discordAuth)
 app.use(async (req, res, next) => {
     try {
-        if(req.body.token == process.env.SUPER_SECRET) return next()
-        let getUser = await authentication.verifyIdToken(req.body.token)
-        let admin = await adminsSchema.findOne({ admins: { $in: [getUser.uid] } })
-        if (!admin) throw new Error()
+        if (req.body.token == process.env.SUPER_SECRET) return next()
+        let user_info = await fetch("https://discord.com/api/v10/users/@me", {
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${req.user.access_token}`
+            },
+        })
+        let json = await user_info.json()
+        let admin = await adminsSchema.findOne({ admins: { $in: [json.id] } })
+        if (!admin) return res.status(401).json({ error: "401 UNAUTHORIZED", message: "You do not have access to this resource." })
+        next()
     } catch (_) {
-        return res.status(401).json({error: "401 UNAUTHORIZED", message: "You do not have access to this resource."})
+        return res.status(502).json({ error: "502 INTERNAL SERVER ERROR", message: "Something went wrong with discord auth. Try again" })
     }
-    return next()
+})
+
+
+// app.use(async (req, res, next) => {
+//     try {
+//         if(req.body.token == process.env.SUPER_SECRET) return next()
+//         let getUser = await authentication.verifyIdToken(req.body.token)
+//         let admin = await adminsSchema.findOne({ admins: { $in: [getUser.uid] } })
+//         if (!admin) throw new Error()
+//     } catch (_) {
+//         return res.status(401).json({error: "401 UNAUTHORIZED", message: "You do not have access to this resource."})
+//     }
+//     return next()
+// })
+
+app.get("/test", (req, res) => {
+    return res.json({ "LOL": "yo" })
 })
 
 app.post("/ping", (req, res) => {
@@ -270,63 +451,65 @@ app.route("/songs")
         req.body._id = new ObjectId()
         req.body.filetype ||= "mp3"
         await createTransaction(async (session) => {
-            if(!["loop"].includes(req.body.state) && !req.body.levelID) throw new Error("You must specify a level ID for this type of song!")
+            if (!["loop"].includes(req.body.state) && !req.body.levelID) throw new Error("You must specify a level ID for this type of song!")
             req.body.urlHash = "LMAO"
-            if(["loop"].includes(req.body.state)) {
+            if (["loop"].includes(req.body.state)) {
                 req.body.levelID = process.env.levelSecret
             }
-            req.body.levelID = [req.body.levelID]
-            if(!req.body.songURL) {
+            if (!Array.isArray(req.body.levelID)) {
+                req.body.levelID = [req.body.levelID]
+            }
+            if (!req.body.songURL) {
                 req.body.songURL = `https://www.newgrounds.com/audio/listen/${req.body.songID}`
             }
             let song = await songsSchema.create([req.body], { session })
-                let data = await fetch(req.body.downloadUrl)
-                if(!data.ok) throw new Error("Invalid Download URL!")
-                let buffer = new Uint8Array(await data.arrayBuffer())
-                let key = ""
-                await fetch("https://storage.hpsk.me/api/bucket/ping")
-                for(let i = 0; i < buffer.length; i += 8000000) {
-                    let arr = Array.from(buffer.slice(i, i+8000000))
-                    let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
-                        method: "POST",
-                        headers: {
-                            Cookie: "token="+process.env.token,
-                            'content-type': "application/json",
-                            "x-secret-token": key
-                        },
-                        body: JSON.stringify(arr)
-                    })
-                    if(!token.ok) {
-                        let data = await token.json()
-                        console.log(data)
-                        throw new Error(data.message)
-                    }
-                    if(i == 0) {
-                        let data = await token.json()
-                        key = data.key
-                    }
+            let data = await fetch(req.body.downloadUrl)
+            if (!data.ok) throw new Error("Invalid Download URL!")
+            let buffer = new Uint8Array(await data.arrayBuffer())
+            let key = ""
+            await fetch("https://storage.hpsk.me/api/bucket/ping")
+            for (let i = 0; i < buffer.length; i += 8000000) {
+                let arr = Array.from(buffer.slice(i, i + 8000000))
+                let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
+                    method: "POST",
+                    headers: {
+                        Cookie: "token=" + process.env.token,
+                        'content-type': "application/json",
+                        "x-secret-token": key
+                    },
+                    body: JSON.stringify(arr)
+                })
+                if (!token.ok) {
+                    let data = await token.json()
+                    console.log(data)
+                    throw new Error(data.message)
                 }
-                let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
-                        method: "POST",
-                        headers: {
-                            Cookie: "token="+process.env.token,
-                            'content-type': "text/plain",
-                            "x-secret-token": key
-                        },
-                        body: "END"
-                    })
-                    if(!end.ok) {
-                        let data = await end.json()
-                        console.log(data)
-                        throw new Error(data.message)
-                    }
-                    let {hash} = await end.json()
-                    req.body.urlHash = hash
-                    await songsSchema.findByIdAndUpdate(song[0]._id.toString(), {
-                        $set: {
-                            urlHash: hash
-                        }
-                    }, { session })
+                if (i == 0) {
+                    let data = await token.json()
+                    key = data.key
+                }
+            }
+            let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body._id.toString()}.${req.body.filetype}`, {
+                method: "POST",
+                headers: {
+                    Cookie: "token=" + process.env.token,
+                    'content-type': "text/plain",
+                    "x-secret-token": key
+                },
+                body: "END"
+            })
+            if (!end.ok) {
+                let data = await end.json()
+                console.log(data)
+                throw new Error(data.message)
+            }
+            let { hash } = await end.json()
+            req.body.urlHash = hash
+            await songsSchema.findByIdAndUpdate(song[0]._id.toString(), {
+                $set: {
+                    urlHash: hash
+                }
+            }, { session })
         }, res)
     })
     .patch(async (req, res) => {
@@ -343,68 +526,68 @@ app.route("/songs")
                 * levelID?: string
                 * filetype: string
          */
-        if(["api.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
+        if (["api.songfilehub.com", "storage.hpsk.me"].includes(new URL(req.body.data.downloadUrl).hostname)) {
             delete req.body.data.downloadUrl
         }
         await createTransaction(async (session) => {
             let song = await songsSchema.findById(req.body.id)
-            if(!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID?.length ?? song.levelID?.length)) throw new Error("You must specify a level ID for this type of song!")
-            if(["loop"].includes(req.body.state)) {
+            if (!["loop"].includes(req.body.data.state ?? song.state) && !(req.body.data.levelID?.length ?? song.levelID?.length)) throw new Error("You must specify a level ID for this type of song!")
+            if (["loop"].includes(req.body.state)) {
                 req.body.data.levelID = [process.env.levelSecret]
             }
-            if(!["mashup", "remix", "loop"].includes(req.body.data.state)) {
-            let duplicates = await songsSchema.aggregate([
-                {
-                  '$match': {
-                    'levelID': {
-                      '$in': req.body.data.levelID
-                    },
-                    'state': {
-                        '$nin': ["mashup", "remix", "loop"]
-                    },
-                    '_id': {
-                        '$ne': new ObjectId(req.body.id)
+            if (!["mashup", "remix", "loop"].includes(req.body.data.state)) {
+                let duplicates = await songsSchema.aggregate([
+                    {
+                        '$match': {
+                            'levelID': {
+                                '$in': req.body.data.levelID
+                            },
+                            'state': {
+                                '$nin': ["mashup", "remix", "loop"]
+                            },
+                            '_id': {
+                                '$ne': new ObjectId(req.body.id)
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$levelID'
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '0',
+                            'levelID': {
+                                '$push': '$levelID'
+                            }
+                        }
+                    }, {
+                        '$project': {
+                            'levelID': {
+                                '$setIntersection': [
+                                    '$levelID', req.body.data.levelID
+                                ]
+                            }
+                        }
                     }
-                  }
-                }, {
-                  '$unwind': {
-                    'path': '$levelID'
-                  }
-                }, {
-                  '$group': {
-                    '_id': '0', 
-                    'levelID': {
-                      '$push': '$levelID'
-                    }
-                  }
-                }, {
-                  '$project': {
-                    'levelID': {
-                      '$setIntersection': [
-                        '$levelID', req.body.data.levelID
-                      ]
-                    }
-                  }
+                ])
+                if (duplicates.length) {
+                    throw new Error(`Duplicate level IDs: ${duplicates[0].levelID.join(", ")}`)
                 }
-              ])
-              if(duplicates.length) {
-                throw new Error(`Duplicate level IDs: ${duplicates[0].levelID.join(", ")}`)
-              }
             }
-            if(!req.body.data.downloadUrl) {
+            if (!req.body.data.downloadUrl) {
                 delete req.body.data.downloadUrl
             }
             await songsSchema.findByIdAndUpdate(req.body.id, {
                 $set: req.body.data
-            }, { session , runValidators: true})
-                if(req.body.data.downloadUrl) {
+            }, { session, runValidators: true })
+            if (req.body.data.downloadUrl) {
                 let data = await fetch(req.body.data.downloadUrl)
-                if(!data.ok) throw new Error("Invalid download URL!")
-                if(song && req.body.data.filetype && song.filetype != req.body.data.filetype) {
+                if (!data.ok) throw new Error("Invalid download URL!")
+                if (song && req.body.data.filetype && song.filetype != req.body.data.filetype) {
                     await fetch(`https://storage.hpsk.me/api/bucket/file/${song.urlHash}`, {
                         method: "DELETE",
                         headers: {
-                            Cookie: "token="+process.env.token,
+                            Cookie: "token=" + process.env.token,
                             'content-type': "application/json",
                             "x-secret-token": key
                         }
@@ -413,43 +596,43 @@ app.route("/songs")
                 let buffer = new Uint8Array(await data.arrayBuffer())
                 let key = ""
                 await fetch("https://storage.hpsk.me/api/bucket/ping")
-                for(let i = 0; i < buffer.length; i += 8000000) {
-                    let arr = Array.from(buffer.slice(i, i+8000000))
+                for (let i = 0; i < buffer.length; i += 8000000) {
+                    let arr = Array.from(buffer.slice(i, i + 8000000))
                     let token = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?${i == 0 ? 'overwrite=true&' : ''}name=${req.body.id.toString()}.${req.body.data.filetype || song.filetype}`, {
                         method: "POST",
                         headers: {
-                            Cookie: "token="+process.env.token,
+                            Cookie: "token=" + process.env.token,
                             'content-type': "application/json",
                             "x-secret-token": key
                         },
                         body: JSON.stringify(arr)
                     })
-                    if(!token.ok) {
+                    if (!token.ok) {
                         let data = await token.json()
                         console.log(data)
                         throw new Error(data.message)
                     }
-                    if(i == 0) {
+                    if (i == 0) {
                         let data = await token.json()
                         key = data.key
                     }
                 }
                 let end = await fetch(`https://storage.hpsk.me/api/bucket/file/a80161badffd?name=${req.body.id.toString()}.${req.body.data.filetype || song.filetype}`, {
-                        method: "POST",
-                        headers: {
-                            Cookie: "token="+process.env.token,
-                            'content-type': "text/plain",
-                            "x-secret-token": key
-                        },
-                        body: "END"
-                    })
-                    if(!end.ok) {
-                        let data = await end.json()
-                        console.log(data)
-                        throw new Error(data.message)
-                    }
-                    let {hash} = await end.json()
-                    req.body.data.urlHash = hash
+                    method: "POST",
+                    headers: {
+                        Cookie: "token=" + process.env.token,
+                        'content-type': "text/plain",
+                        "x-secret-token": key
+                    },
+                    body: "END"
+                })
+                if (!end.ok) {
+                    let data = await end.json()
+                    console.log(data)
+                    throw new Error(data.message)
+                }
+                let { hash } = await end.json()
+                req.body.data.urlHash = hash
             }
         }, res)
     })
@@ -458,15 +641,15 @@ app.route("/songs")
              * id: string
          */
         await createTransaction(async (session) => {
-            let {urlHash} = await songsSchema.findOneAndDelete({ _id: new ObjectId(req.body.id) }, { session })
+            let { urlHash } = await songsSchema.findOneAndDelete({ _id: new ObjectId(req.body.id) }, { session })
             await fetch("https://storage.hpsk.me/api/bucket/ping")
             let end = await fetch("https://storage.hpsk.me/api/bucket/file/" + urlHash, {
                 method: "DELETE",
                 headers: {
-                    Cookie: "token="+process.env.token
+                    Cookie: "token=" + process.env.token
                 }
             })
-            if(!end.ok) {
+            if (!end.ok) {
                 let data = await end.json()
                 console.log(data)
                 throw new Error(data.message)
@@ -477,7 +660,10 @@ app.route("/songs")
 app.route("/admins")
     .post(async (req, res) => {
         let { admins } = await adminsSchema.findOne()
-        let users = admins.map(async e => await authentication.getUser(e))
+        let users = admins.map(async e => {
+            let user_info = await rest.get(Routes.user(e))
+            return user_info
+        })
         return res.json(await Promise.all(users))
     })
     .put(async (req, res) => {
@@ -497,15 +683,24 @@ app.route("/admins")
          * uid: string
          */
         await createTransaction(async (session) => {
-            if(req.body.uid != "jlUpnRgrfQPSHkVn4WKPdhqjjlP2") {
-            await adminsSchema.updateOne({ admins: { $in: [req.body.uid] } }, {
-                $pull: {
-                    admins: req.body.uid
-                }
-            }, { session })
-        }
+            if (req.body.uid != "703364595321929730") {
+                await adminsSchema.updateOne({ admins: { $in: [req.body.uid] } }, {
+                    $pull: {
+                        admins: req.body.uid
+                    }
+                }, { session })
+            }
         }, res)
     })
+
+app.get("/discord_user/:id", async (req, res) => {
+    try {
+        let user_info = await rest.get(Routes.user(req.params.id))
+        return res.json(user_info)
+    } catch (_) {
+        return res.sendStatus(404)
+    }
+})
 
 app.post("/non-admins", async (req, res) => {
     let token;
