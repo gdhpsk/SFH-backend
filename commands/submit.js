@@ -1,6 +1,7 @@
 const { generateText, getYoutubeVideoId } = require("../helper");
 const songsSchema = require("../schemas/songs")
 const submissionSchema = require("../schemas/submission")
+const eventSchema = require("../schemas/event")
 
 function escapeRegExp(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -52,6 +53,49 @@ module.exports = {
                         type: 4,
                         name: "level_id",
                         description: "ID of the level",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "showcase",
+                        description: "YT link for the thumbnail on the site",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_link",
+                        description: "Showcase of the mashuped song",
+                        required: false
+                    },
+                    {
+                        type: 3,
+                        name: "comments",
+                        description: "Extra comments?",
+                        required: false
+                    },
+                ]
+            },
+            {
+                type: 1,
+                name: "event",
+                description: "Used for submitting for the SFH event, see #event-info",
+                options: [
+                    {
+                        type: 11,
+                        name: "mashup_file",
+                        description: "File of the mashuped song",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_author",
+                        description: "Author of the song that you're mashing the gd song up with",
+                        required: true
+                    },
+                    {
+                        type: 3,
+                        name: "song_name",
+                        description: "Name of the song that you're mashing the gd song up with",
                         required: true
                     },
                     {
@@ -583,6 +627,10 @@ module.exports = {
                     applied_tags: [...tags, "1352913222939971634"]
                 }
             })
+            if(tags.includes("1412792568768495677")) {
+                await rest.put(Routes.channelMessageReaction(message.channel_id, message.id, "👍"))
+                await rest.put(Routes.channelMessageReaction(message.channel_id, message.id, "👎"))
+            }
             await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: `Successfully submitted NONG! Check it out here: https://discord.com/channels/899784386038333551/${message.channel_id}/${message.id}. Feel free to search for your submission in the respective forum if you want to edit it!`
@@ -624,7 +672,13 @@ module.exports = {
 
         let levelID = getOption("level_id")?.toString()
         let songURL = getOption("song_link")?.toString()
-        if (levelID) {
+        if (levelID || interaction.data.options[0].name == "event") {
+            if(interaction.data.options[0].name == "event") {
+                const event = await eventSchema.findOne()
+                levelID = event.levelID
+                obj["songName"] = event.songName
+                obj["songAuthor"] = event.songAuthor
+            }
             let exists = await fetch(`https://gdbrowser.com/api/search/${levelID}?page=0&count=1`)
             if (!exists.ok) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
@@ -735,6 +789,14 @@ module.exports = {
             obj["comments"] = getOption("comments") || ""
             obj["state"] = "mashup"
             tag = ["1352913707805704323"]
+        }
+
+        if (interaction.data.options[0].name == "event") {
+            obj["mashupName"] = getOption("song_name")
+            obj["mashupAuthor"] = getOption("song_author")
+            obj["comments"] = getOption("comments") || ""
+            obj["state"] = "mashup"
+            tag = ["1352913707805704323", "1412792568768495677"]
         }
 
         if (interaction.data.options[0].name == "remix") {

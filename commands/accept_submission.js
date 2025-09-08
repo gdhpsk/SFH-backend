@@ -130,6 +130,14 @@ module.exports = {
                         content: `<@${json.userID}>, <@${interaction.member.user.id}> has accepted your submission`
                     }
                 })
+
+                if(json.tags.includes("1412792568768495677")) {
+                await rest.patch(Routes.channel(json.threadChannel), {
+                    body: {
+                        applied_tags: [...json.tags, "1352900969708650526"]
+                    }
+                })
+                } else {
                 await rest.patch(Routes.channel(json.threadChannel), {
                     body: {
                         applied_tags: [...json.tags, "1352900969708650526"],
@@ -137,6 +145,7 @@ module.exports = {
                         archived: true
                     }
                 })
+                }
                 await json.deleteOne()
             } catch (_) {
                 console.log(_)

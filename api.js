@@ -476,9 +476,13 @@ app.route("/songs")
 
 app.route("/admins")
     .post(async (req, res) => {
-        let { admins } = await adminsSchema.findOne()
+        try {
+            let { admins } = await adminsSchema.findOne()
         let users = admins.map(async e => await authentication.getUser(e))
         return res.json(await Promise.all(users))
+        } catch(_) {
+            return res.status(500).json({error: "500 INTERNAL SERVER ERROR", message: _})
+        }
     })
     .put(async (req, res) => {
         /**

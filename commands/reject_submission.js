@@ -31,13 +31,21 @@ module.exports = {
                         content: `<@${json.userID}>, your submission has been rejected by <@${interaction.member.user.id}>. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`
                     }
                 })
-                await rest.patch(Routes.channel(json.threadChannel), {
+                if(json.tags.includes("1412792568768495677")) {
+                    await rest.patch(Routes.channel(json.threadChannel), {
+                    body: {
+                        applied_tags: [...json.tags, "1352901022426726471"],
+                    }
+                })
+                } else {
+                    await rest.patch(Routes.channel(json.threadChannel), {
                     body: {
                         applied_tags: [...json.tags, "1352901022426726471"],
                         locked: true,
                         archived: true
                     }
                 })
+                }
                 await json.deleteOne()
             } catch (_) {
                 console.log(_)
