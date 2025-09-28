@@ -605,6 +605,7 @@ module.exports = {
                             content: `You've already reached the max limit of ${eventLimit.maxLimit} submission for the event!`
                         }
                     })
+                    return;
                 }
                 getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
             }
