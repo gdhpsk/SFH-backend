@@ -1,7 +1,7 @@
 {
     "mashup": ["songName", "songAuthor", "mashupName", "mashupAuthor", "levelID", "songURL", "showcase", "comments"],
     "event_mashup": ["mashupName", "mashupAuthor", "songURL", "showcase", "comments"],
-    "remix_mashup": ["remixName", "remixAuthor", "remixInfo", "songURL", "showcase", "comments"],
+    "remix_mashup": ["remixInfo", "songURL", "showcase", "comments"],
     "remix": ["remixName", "remixAuthor", "remixInfo", "levelID", "songURL", "showcase", "comments"],
     "unrated": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],
     "rated": ["songName", "songAuthor", "levelID", "songURL", "showcase", "comments"],

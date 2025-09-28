@@ -137,18 +137,6 @@ module.exports = {
                     },
                     {
                         type: 3,
-                        name: "remix_author",
-                        description: "Author of the remixed song",
-                        required: true
-                    },
-                    {
-                        type: 3,
-                        name: "remix_name",
-                        description: "Name of the remixed song",
-                        required: true
-                    },
-                    {
-                        type: 3,
                         name: "showcase",
                         description: "YT link for the thumbnail on the site",
                         required: true
@@ -753,8 +741,17 @@ module.exports = {
                 if (interaction.data.options[0].name == "event") {
                     const event = await eventSchema.findOne()
                     levelID = event.levelID
-                    obj["songName"] = event.songName
-                    obj["songAuthor"] = event.songAuthor
+                    switch (interaction.data.options[0].options[0].name) {
+                    case "mashup":  
+                        obj["songName"] = event.songName
+                        obj["songAuthor"] = event.songAuthor
+                    break;
+                    case "remix":
+                        obj["remixName"] = event.songName
+                        obj["remixAuthor"] = event.songAuthor
+                    break;
+
+                }
                 }
                 let exists = await fetch(`https://gdbrowser.com/api/search/${levelID}?page=0&count=1`)
                 if (!exists.ok) {
@@ -878,8 +875,6 @@ module.exports = {
                         tag = ["1352913707805704323", "1412792568768495677"]
                     break;
                     case "remix":
-                        obj["remixName"] = getOption("remix_name")
-                        obj["remixAuthor"] = getOption("remix_author")
                         obj["remixInfo"] = getOption("remix_info")
                         obj["comments"] = getOption("comments") || ""
                         obj["state"] = "remix"
