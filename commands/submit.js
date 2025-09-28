@@ -591,7 +591,7 @@ module.exports = {
             if (interaction.data.options[0].name == "event") {
                 const checkUserLim = await eventLimitSchema.findOne({userID: interaction.member.user.id}).lean() || {count: 0}
                 const eventLimit = await eventSchema.findOne().lean()
-                if(checkUserLim.count > eventLimit.maxLimit) {
+                if(checkUserLim.count >= eventLimit.maxLimit) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                     body: {
                         content: `You've already reached the max limit of ${eventLimit.maxLimit} submission for the event!`
