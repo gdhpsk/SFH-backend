@@ -124,43 +124,43 @@ module.exports = {
                             },
                         ]
                     },
-                     {
-                type: 1,
-                name: "remix",
-                description: "Used for submitting remixes for the SFH event",
-                options: [
                     {
-                        type: 11,
-                        name: "remix_file",
-                        description: "File of the remixed song",
-                        required: true
-                    },
-                    {
-                        type: 3,
-                        name: "showcase",
-                        description: "YT link for the thumbnail on the site",
-                        required: true
-                    },
-                    {
-                        type: 3,
-                        name: "song_link",
-                        description: "Showcase of the remixed song",
-                        required: false
-                    },
-                    {
-                        type: 3,
-                        name: "remix_info",
-                        description: 'For example, in "gdhpsk - example (8-Bit)", "(8-Bit)" is the remix info. Include proper brackets!',
-                        required: false
-                    },
-                    {
-                        type: 3,
-                        name: "comments",
-                        description: "Extra comments?",
-                        required: false
+                        type: 1,
+                        name: "remix",
+                        description: "Used for submitting remixes for the SFH event",
+                        options: [
+                            {
+                                type: 11,
+                                name: "remix_file",
+                                description: "File of the remixed song",
+                                required: true
+                            },
+                            {
+                                type: 3,
+                                name: "showcase",
+                                description: "YT link for the thumbnail on the site",
+                                required: true
+                            },
+                            {
+                                type: 3,
+                                name: "song_link",
+                                description: "Showcase of the remixed song",
+                                required: false
+                            },
+                            {
+                                type: 3,
+                                name: "remix_info",
+                                description: 'For example, in "gdhpsk - example (8-Bit)", "(8-Bit)" is the remix info. Include proper brackets!',
+                                required: false
+                            },
+                            {
+                                type: 3,
+                                name: "comments",
+                                description: "Extra comments?",
+                                required: false
+                            }
+                        ]
                     }
-                ]
-            }
                 ]
             },
             {
@@ -589,14 +589,22 @@ module.exports = {
                 getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
             }
             if (interaction.data.options[0].name == "event") {
-                const checkUserLim = await eventLimitSchema.findOne({userID: interaction.member.user.id}).lean() || {count: 0}
-                const eventLimit = await eventSchema.findOne().lean()
-                if(checkUserLim.count >= eventLimit.maxLimit) {
-                await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
                     body: {
-                        content: `You've already reached the max limit of ${eventLimit.maxLimit} submission for the event!`
+                        type: 5,
+                        data: {
+                            flags: 1 << 6
+                        }
                     }
                 })
+                const checkUserLim = await eventLimitSchema.findOne({ userID: interaction.member.user.id }).lean() || { count: 0 }
+                const eventLimit = await eventSchema.findOne().lean()
+                if (checkUserLim.count >= eventLimit.maxLimit) {
+                    await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
+                        body: {
+                            content: `You've already reached the max limit of ${eventLimit.maxLimit} submission for the event!`
+                        }
+                    })
                 }
                 getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
             }
@@ -702,23 +710,26 @@ module.exports = {
                 })
 
                 if (tags.includes("1412792568768495677")) {
-                await eventLimitSchema.updateOne({userID: interaction.member.user.id}, {
-                    $inc: {
-                        count: 1
-                    }
-                }, {upsert: true})
-            }
+                    await eventLimitSchema.updateOne({ userID: interaction.member.user.id }, {
+                        $inc: {
+                            count: 1
+                        }
+                    }, { upsert: true })
+                }
             }
 
             if (interaction.type == 3) return;
-            await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
-                body: {
-                    type: 5,
-                    data: {
-                        flags: 1 << 6
+
+            if (interaction.data.options[0].name !== "event") {
+                await rest.post(Routes.interactionCallback(interaction.id, interaction.token), {
+                    body: {
+                        type: 5,
+                        data: {
+                            flags: 1 << 6
+                        }
                     }
-                }
-            })
+                })
+            }
             let song = Object.values(interaction.data?.resolved?.attachments || {})?.[0]
             if (song && !["audio/mpeg", "audio/ogg"].includes(song?.content_type || "")) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
@@ -742,16 +753,16 @@ module.exports = {
                     const event = await eventSchema.findOne()
                     levelID = event.levelID
                     switch (interaction.data.options[0].options[0].name) {
-                    case "mashup":  
-                        obj["songName"] = event.songName
-                        obj["songAuthor"] = event.songAuthor
-                    break;
-                    case "remix":
-                        obj["remixName"] = event.songName
-                        obj["remixAuthor"] = event.songAuthor
-                    break;
+                        case "mashup":
+                            obj["songName"] = event.songName
+                            obj["songAuthor"] = event.songAuthor
+                            break;
+                        case "remix":
+                            obj["remixName"] = event.songName
+                            obj["remixAuthor"] = event.songAuthor
+                            break;
 
-                }
+                    }
                 }
                 let exists = await fetch(`https://gdbrowser.com/api/search/${levelID}?page=0&count=1`)
                 if (!exists.ok) {
@@ -873,13 +884,13 @@ module.exports = {
                         obj["comments"] = getOption("comments") || ""
                         obj["state"] = "mashup"
                         tag = ["1352913707805704323", "1412792568768495677"]
-                    break;
+                        break;
                     case "remix":
                         obj["remixInfo"] = getOption("remix_info")
                         obj["comments"] = getOption("comments") || ""
                         obj["state"] = "remix"
                         tag = ["1352913733545889834", "1412792568768495677"]
-                    break;
+                        break;
 
                 }
             }
