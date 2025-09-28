@@ -127,7 +127,7 @@ module.exports = {
                      {
                 type: 1,
                 name: "remix",
-                description: "Used for submitting remixes",
+                description: "Used for submitting remixes for the SFH event",
                 options: [
                     {
                         type: 11,
@@ -601,7 +601,7 @@ module.exports = {
                 getOption = (option) => interaction.data.options[0].options[0].options.find(e => e.name == option)?.value
             }
             if (interaction.data.options[0].name == "event") {
-                const checkUserLim = await eventLimitSchema.findOne({userID: interaction.member.user.id}).lean()
+                const checkUserLim = await eventLimitSchema.findOne({userID: interaction.member.user.id}).lean() || {count: 0}
                 const eventLimit = await eventSchema.findOne().lean()
                 if(checkUserLim.count > eventLimit.maxLimit) {
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
