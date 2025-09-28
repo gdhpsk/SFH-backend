@@ -19,4 +19,4 @@ const eventLimitSchema = new mongoose.Schema({
    }
 }, {id: false})
 
-module.exports = mongoose.model("event_limits", eventLimitSchema)
+module.exports = mongoose.model("events", eventLimitSchema)

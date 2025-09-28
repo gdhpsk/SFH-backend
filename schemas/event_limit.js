@@ -11,4 +11,4 @@ const eventSchema = new mongoose.Schema({
    }
 }, {id: false})
 
-module.exports = mongoose.model("events", eventSchema)
+module.exports = mongoose.model("event_limits", eventSchema)
