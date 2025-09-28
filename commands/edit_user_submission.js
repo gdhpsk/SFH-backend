@@ -24,7 +24,7 @@ module.exports = {
             if (!user.roles.includes("899796185966075905") && !user.roles.includes("981226306085724160") && json.userID != interaction.member.user.id) return;
         }
         try {
-            let fields = json.duplicate ? editable["duplicate"] : json.menuType ? editable[json.state][json.menuType] : json.tags.includes("1412792568768495677") ? editable["event"] : editable[json.state]
+            let fields = json.duplicate ? editable["duplicate"] : json.menuType ? editable[json.state][json.menuType] : json.tags.includes("1412792568768495677") ? (json.state == "mashup" ? editable["event_mashup"] : editable["event_remix"]) : editable[json.state]
             let select_menu = {
                 type: 3,
                 custom_id: "edit_submission",

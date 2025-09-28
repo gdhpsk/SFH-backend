@@ -1,5 +1,6 @@
 const { generateText, generateSongName, getYoutubeVideoId } = require("../helper");
 const eventsSchema = require("../schemas/event")
+const eventLimitSchema = require("../schemas/event_limit")
 
 module.exports = {
     data: {
@@ -25,6 +26,12 @@ module.exports = {
                         name: "level_id",
                         description: "Author of the song that you're mashing the gd song up with",
                         required: true
+                    },
+                    {
+                        type: 4,
+                        name: "max_submissions",
+                        description: "The most amount of submissions the event can have",
+                        required: true
                     }
                 ]
     },
@@ -46,9 +53,11 @@ module.exports = {
                     $set: {
                         songAuthor: getOption("song_author"),
                         songName: getOption("song_name"),
-                        levelID: getOption("level_id")
+                        levelID: getOption("level_id"),
+                        maxLimit: getOption("max_submissions")
                     }
                 })
+                await eventLimitSchema.deleteMany()
                 await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                 body: {
                     content: `Successfully updated the event.`

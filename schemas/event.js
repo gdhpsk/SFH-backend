@@ -1,6 +1,6 @@
 const mongoose = require("mongoose")
 
-const eventSchema = new mongoose.Schema({
+const eventLimitSchema = new mongoose.Schema({
    levelID: {
     type: String,
     required: true
@@ -12,7 +12,11 @@ const eventSchema = new mongoose.Schema({
    songAuthor: {
     type: String,
     required: true
+   },
+   maxLimit: {
+    type: Number,
+    required: true
    }
 }, {id: false})
 
-module.exports = mongoose.model("events", eventSchema)
+module.exports = mongoose.model("event_limits", eventLimitSchema)
