@@ -712,11 +712,14 @@ module.exports = {
                 await metadata.updateOne({
                     $set: obj
                 })
+
+                if (tags.includes("1412792568768495677")) {
                 await eventLimitSchema.updateOne({userID: interaction.member.user.id}, {
                     $inc: {
                         count: 1
                     }
                 }, {upsert: true})
+            }
             }
 
             if (interaction.type == 3) return;
