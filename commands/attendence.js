@@ -22,7 +22,7 @@ module.exports = {
         const data = await attendenceSchema.find().sort({ total: -1 }).lean()
          await rest.patch(Routes.webhookMessage(interaction.application_id, interaction.token), {
                     body: {
-                        content: `Submissions done since ${getLatestSunday().toUTCString()}:\n\n${data.map(e => `<@${e.userID}>: **${e.total}** (${e.accepted} accepted, ${e.rejected} rejected)`).join("\n")}`,
+                        content: `**__Submissions done since ${getLatestSunday().toUTCString()}:__**\n\n${data.map(e => `<@${e.userID}>: *${e.total}* (${e.accepted} accepted, ${e.rejected} rejected)`).join("\n")}`,
                         flags: 1 << 6,
                         allowed_mentions: {
                             parse: []
