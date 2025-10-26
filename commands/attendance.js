@@ -3,7 +3,7 @@ const attendenceSchema = require("../schemas/attendence")
 
 module.exports = {
     data: {
-        name: "attendence",
+        name: "attendance",
         description: "View how well mashup staff are performing",
         type: 1,
         dm_permission: true,
