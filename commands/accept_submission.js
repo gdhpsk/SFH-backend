@@ -134,7 +134,7 @@ module.exports = {
                 if(user.roles.includes("1281177070411452438") && json.state == "mashup") {
                                     await attendenceSchema.updateOne({userID: interaction.member.user.id}, {
                                         $inc: {
-                                            rejected: 1,
+                                            accepted: 1,
                                             total: 1
                                         }
                                     }, {upsert: true})
