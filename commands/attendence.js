@@ -24,7 +24,9 @@ module.exports = {
                     body: {
                         content: `Submissions done since ${getLatestSunday().toUTCString()}:\n\n${data.map(e => `<@${e.userID}>: **${e.total}** (${e.accepted} accepted, ${e.rejected} rejected)`).join("\n")}`,
                         flags: 1 << 6,
-                        allowed_mentions: []
+                        allowed_mentions: {
+                            parse: []
+                        }
                     }
                 })
     }
