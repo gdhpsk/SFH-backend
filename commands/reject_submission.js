@@ -1,5 +1,6 @@
 const { generateText } = require("../helper");
 let submissionSchema = require("../schemas/submission")
+const attendenceSchema = require("../schemas/attendence")
 
 module.exports = {
     data: {
@@ -31,6 +32,14 @@ module.exports = {
                         content: `<@${json.userID}>, your submission has been rejected by <@${interaction.member.user.id}>. Reason: ${interaction.data.components[0].components[0].value}. If you have any questions, feel free to DM them.`
                     }
                 })
+                if(user.roles.includes("1281177070411452438") && json.state == "mashup") {
+                    await attendenceSchema.updateOne({userID: interaction.member.user.id}, {
+                        $inc: {
+                            accepted: 1,
+                            total: 1
+                        }
+                    }, {upsert: true})
+                }
                 if(json.tags.includes("1412792568768495677")) {
                     await rest.patch(Routes.channel(json.threadChannel), {
                     body: {

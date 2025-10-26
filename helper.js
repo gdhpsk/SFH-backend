@@ -4,7 +4,7 @@ function getYoutubeVideoId(link) {
     let url = text.match(urlPattern)
 
     if (url && (url[0].includes('youtube') || url[0].includes('youtu.be'))) {
-const youtubeRegExp = /http(?:s?):\/\/(?:m\.|www\.)?(?:m\.)?youtu(?:be\.com\/(?:watch\?v=|embed\/|shorts\/)|\.be\/)([\w\-\_]*)(&(amp;)?[\w\?\=]*)?/;
+        const youtubeRegExp = /http(?:s?):\/\/(?:m\.|www\.)?(?:m\.)?youtu(?:be\.com\/(?:watch\?v=|embed\/|shorts\/)|\.be\/)([\w\-\_]*)(&(amp;)?[\w\?\=]*)?/;
         const match = text.match(youtubeRegExp)
         const fullLink = url[0]
         let videoId = null
@@ -37,28 +37,38 @@ function duplicateText(obj) {
     return `## ${obj["name"]} by ${obj["author"]} <:Copied:1277470308982325372>\n***Song:*** ${obj["songName"]}\n***Level ID:*** ${obj["levelID"]}\n***Downloads:*** ${obj["downloads"]}\n***Song ID:*** ${obj["songID"]}\n***Song URL:*** <${obj["songURL"]}>\n***Thumbnail:*** https://i.ytimg.com/vi/${getYoutubeVideoId(obj["showcase"]).videoId}/mqdefault.jpg\n***State:*** ${obj.state}${obj.comments ? `\n***Notes:*** ${obj.comments}` : ""}`
 }
 
+
+
 module.exports = {
+    getLatestSunday() {
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // Sunday = 0
+        const latestSunday = new Date(now);
+        latestSunday.setDate(now.getDate() - dayOfWeek);
+        latestSunday.setHours(0, 0, 0, 0);
+        return latestSunday;
+    },
     generateText(obj) {
-        if(obj.duplicate) return duplicateText(obj)
-        if(obj.state == "mashup") return mashupText(obj)
-        if(obj.state == "remix") return remixText(obj)
-        if(["unrated", "rated", "challenge"].includes(obj.state)) return unratedratedchallengeText(obj)
-        if(obj.state == "loop") return menuLoopText(obj)
+        if (obj.duplicate) return duplicateText(obj)
+        if (obj.state == "mashup") return mashupText(obj)
+        if (obj.state == "remix") return remixText(obj)
+        if (["unrated", "rated", "challenge"].includes(obj.state)) return unratedratedchallengeText(obj)
+        if (obj.state == "loop") return menuLoopText(obj)
     },
     generateSongName(obj) {
-        if(obj.duplicate) return obj.songName
-        if(obj.state == "mashup") return `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}`
-            if(obj.state == "remix") return `${obj["remixAuthor"]} - ${obj["remixName"]}${obj["remixInfo"] ? ` ${obj["remixInfo"]}` : ""}`
-            if(["unrated", "rated", "challenge"].includes(obj.state)) return `${obj["songAuthor"]} - ${obj["songName"]}`
-            if(obj.state == "loop") return `${obj.menuType == "remix" ? `GD Menu Song (${obj.remixType})` : obj.menuType == "mashup" ? `${obj.songAuthor == 'Menu Loop' ? 'GD Menu Loop' : obj.songAuthor} ${obj.songName ? `- ${obj.songName} ` : ''}x ${obj.mashupAuthor} - ${obj.mashupName}` : `${obj.songAuthor} - ${obj.songName}`}`
+        if (obj.duplicate) return obj.songName
+        if (obj.state == "mashup") return `${obj["songAuthor"]} - ${obj["songName"]} x ${obj["mashupAuthor"]} - ${obj["mashupName"]}`
+        if (obj.state == "remix") return `${obj["remixAuthor"]} - ${obj["remixName"]}${obj["remixInfo"] ? ` ${obj["remixInfo"]}` : ""}`
+        if (["unrated", "rated", "challenge"].includes(obj.state)) return `${obj["songAuthor"]} - ${obj["songName"]}`
+        if (obj.state == "loop") return `${obj.menuType == "remix" ? `GD Menu Song (${obj.remixType})` : obj.menuType == "mashup" ? `${obj.songAuthor == 'Menu Loop' ? 'GD Menu Loop' : obj.songAuthor} ${obj.songName ? `- ${obj.songName} ` : ''}x ${obj.mashupAuthor} - ${obj.mashupName}` : `${obj.songAuthor} - ${obj.songName}`}`
     },
     getYoutubeVideoId(link) {
         const text = link.trim()
         let urlPattern = /https?:\/\/(?:www\.)?[\w\.-]+(?:\/[\w\.-]*)*(?:\?[\w\.\-]+=[\w\.\-]+(?:&[\w\.\-]+=[\w\.\-]+)*)?\/?/g
         let url = text.match(urlPattern)
-    
+
         if (url && (url[0].includes('youtube') || url[0].includes('youtu.be'))) {
-    const youtubeRegExp = /http(?:s?):\/\/(?:m\.|www\.)?(?:m\.)?youtu(?:be\.com\/(?:watch\?v=|embed\/|shorts\/)|\.be\/)([\w\-\_]*)(&(amp;)?[\w\?\=]*)?/;
+            const youtubeRegExp = /http(?:s?):\/\/(?:m\.|www\.)?(?:m\.)?youtu(?:be\.com\/(?:watch\?v=|embed\/|shorts\/)|\.be\/)([\w\-\_]*)(&(amp;)?[\w\?\=]*)?/;
             const match = text.match(youtubeRegExp)
             const fullLink = url[0]
             let videoId = null
